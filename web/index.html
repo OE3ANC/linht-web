@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linht Manager</title>
+    <!-- xterm.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen">
+        <div class="login-container">
+            <div class="terminal-logo">
+                <span class="prompt-symbol">&gt;</span><span class="logo-text">LinHT</span><span class="cursor">_</span>
+            </div>
+            <form id="login-form">
+                <input type="password" id="password" placeholder="Password" required autofocus>
+                <button type="submit">Login</button>
+            </form>
+            <div id="login-error" class="error hidden"></div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="screen hidden">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="prompt-symbol">&gt;</span><span class="logo-text">LinHT</span><span class="cursor">_</span>
+            </div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="terminal">Terminal</button>
+                <button class="nav-tab" data-tab="files">Files</button>
+                <button class="nav-tab" data-tab="containers">Containers</button>
+                <button class="nav-tab" data-tab="images">Images</button>
+            </div>
+            <button id="logout-btn" class="btn-logout">Logout</button>
+        </nav>
+
+        <!-- Images Tab -->
+        <div id="images-tab" class="tab-content hidden">
+            <div class="toolbar">
+                <h2>Docker Images</h2>
+                <div class="toolbar-actions">
+                    <label for="import-file" class="btn btn-primary">
+                        Import Image
+                        <input type="file" id="import-file" accept=".tar,.tar.gz,.tgz" hidden>
+                    </label>
+                    <button id="refresh-images" class="btn">Refresh</button>
+                </div>
+            </div>
+
+            <div id="images-list" class="list-container">
+                <div class="loading">Loading images...</div>
+            </div>
+        </div>
+
+        <!-- Containers Tab -->
+        <div id="containers-tab" class="tab-content hidden">
+            <div class="toolbar">
+                <h2>Docker Containers</h2>
+                <div class="toolbar-actions">
+                    <button id="create-container-btn" class="btn btn-primary">Create Container</button>
+                    <button id="refresh-containers" class="btn">Refresh</button>
+                </div>
+            </div>
+
+            <div id="containers-list" class="list-container">
+                <div class="loading">Loading containers...</div>
+            </div>
+        </div>
+
+        <!-- Files Tab -->
+        <div id="files-tab" class="tab-content hidden">
+            <div class="toolbar">
+                <h2>File Manager</h2>
+                <div class="toolbar-actions">
+                    <button id="fm-parent-btn" class="btn">↑ Parent</button>
+                    <button id="fm-mkdir-btn" class="btn btn-primary">+ Folder</button>
+                    <button id="fm-upload-btn" class="btn btn-primary">↑ Upload</button>
+                    <input type="file" id="fm-upload-input" hidden>
+                    <button id="fm-refresh-btn" class="btn">⟳ Refresh</button>
+                </div>
+            </div>
+            
+            <div class="fm-breadcrumb-container">
+                <div id="fm-breadcrumb">/</div>
+            </div>
+            
+            <div class="fm-table-container">
+                <table class="fm-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Size</th>
+                            <th>Modified</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fm-file-list">
+                        <tr><td colspan="4" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Terminal Tab -->
+        <div id="terminal-tab" class="tab-content active">
+            <div class="toolbar">
+                <h2>Terminal</h2>
+                <div class="toolbar-actions">
+                    <button id="new-host-shell" class="btn btn-primary" onclick="openHostShell()">Host Shell</button>
+                    <button id="new-container-shell" class="btn" onclick="openContainerShell()">Container Shell</button>
+                    <button id="close-terminal" class="btn btn-danger" onclick="closeTerminal()">Close</button>
+                </div>
+            </div>
+            
+            <div id="terminal-container" class="terminal-wrapper">
+                <div id="xterm-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Container Modal -->
+    <div id="create-container-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Container</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="create-container-form">
+                <div class="form-group">
+                    <label>Image:</label>
+                    <select id="container-image" required>
+                        <option value="">Select an image...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Container Name:</label>
+                    <input type="text" id="container-name" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label>Environment Variables (one per line):</label>
+                    <textarea id="container-env" rows="3" placeholder="KEY=value"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Command (space-separated):</label>
+                    <input type="text" id="container-cmd" placeholder="Optional">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeCreateModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Logs Modal -->
+    <div id="logs-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Container Logs</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="logs-container" id="logs-content"></div>
+        </div>
+    </div>
+
+    <!-- Container Selection Modal -->
+    <div id="container-select-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Container</h3>
+                <button class="modal-close" onclick="document.getElementById('container-select-modal').classList.add('hidden')">&times;</button>
+            </div>
+            <div id="container-select-list"></div>
+        </div>
+    </div>
+
+    <!-- File Manager Create Folder Modal -->
+    <div id="fm-mkdir-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Folder</h3>
+                <button class="modal-close fm-modal-close">&times;</button>
+            </div>
+            <form id="fm-mkdir-form">
+                <div class="form-group">
+                    <label>Folder Name:</label>
+                    <input type="text" id="fm-folder-name" required placeholder="Enter folder name">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn fm-modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-animation">
+            <div class="loading-text">
+                <span class="prompt-symbol">&gt;</span><span class="logo-text">LinHT</span><span class="cursor">_</span>
+            </div>
+            <div class="scan-container">
+                <div class="scan-bar"></div>
+            </div>
+            <div class="loading-status" id="loading-status">Communicating with daemon...</div>
+        </div>
+    </div>
+
+    <!-- xterm.js and addons -->
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+    
+    <!-- Application scripts -->
+    <script src="/utils.js"></script>
+    <script src="/app.js"></script>
+    <script src="/filemanager.js"></script>
+    <script src="/terminal.js"></script>
+</body>
+</html>
