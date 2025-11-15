@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"runtime"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -21,8 +22,7 @@ const (
 )
 
 type DockerPlugin struct {
-	client         *client.Client
-	tokenValidator TokenValidator
+	client *client.Client
 }
 
 func NewDockerPlugin(cli *client.Client) (*DockerPlugin, error) {
@@ -30,11 +30,6 @@ func NewDockerPlugin(cli *client.Client) (*DockerPlugin, error) {
 		return nil, fmt.Errorf("docker client cannot be nil")
 	}
 	return &DockerPlugin{client: cli}, nil
-}
-
-// SetTokenValidator sets the token validation function
-func (p *DockerPlugin) SetTokenValidator(validator TokenValidator) {
-	p.tokenValidator = validator
 }
 
 // Shutdown implements the Plugin interface
@@ -98,6 +93,11 @@ func (p *DockerPlugin) importImage(c *fiber.Ctx) error {
 		return SendErrorMessage(c, 400, "No file provided")
 	}
 
+	// Log image import details
+	slog.Info("Docker image import started",
+		"filename", file.Filename,
+		"size", file.Size)
+
 	// Validate file type (basic check on extension)
 	filename := file.Filename
 	if len(filename) > 0 {
@@ -114,24 +114,56 @@ func (p *DockerPlugin) importImage(c *fiber.Ctx) error {
 		}
 	}
 
+	// Log memory usage before starting import
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	slog.Info("Memory stats before Docker image import",
+		"alloc", m.Alloc/1024/1024, // MB
+		"sys", m.Sys/1024/1024, // MB
+		"num_gc", m.NumGC)
+
 	src, err := file.Open()
 	if err != nil {
 		return SendErrorMessage(c, 500, "Failed to open file")
 	}
 	defer src.Close()
 
-	ctx := context.Background()
+	// Create a context with longer timeout for large images
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	defer cancel()
+
+	startTime := time.Now()
+	slog.Info("Starting Docker ImageLoad", "filename", file.Filename)
+
 	resp, err := p.client.ImageLoad(ctx, src, true)
 	if err != nil {
+		slog.Error("Docker ImageLoad failed",
+			"filename", file.Filename,
+			"error", err,
+			"duration", time.Since(startTime))
 		return SendError(c, 500, err)
 	}
 	defer resp.Body.Close()
 
 	// Read response to ensure completion
+	slog.Info("Processing Docker image load response")
 	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
+		slog.Error("Failed to process Docker image load response",
+			"filename", file.Filename,
+			"error", err,
+			"duration", time.Since(startTime))
 		return SendErrorMessage(c, 500, fmt.Sprintf("Failed to process response: %v", err))
 	}
+
+	// Log completion and memory usage after import
+	runtime.ReadMemStats(&m)
+	slog.Info("Docker image import completed",
+		"filename", file.Filename,
+		"size", file.Size,
+		"duration", time.Since(startTime),
+		"alloc_after", m.Alloc/1024/1024, // MB
+		"sys_after", m.Sys/1024/1024) // MB
 
 	return SendSuccess(c, nil, "Image imported successfully")
 }
@@ -292,16 +324,6 @@ func (p *DockerPlugin) deleteContainer(c *fiber.Ctx) error {
 
 func (p *DockerPlugin) streamLogs(c *fiber.Ctx) error {
 	containerID := c.Params("id")
-
-	// Validate token from query parameter (EventSource can't use headers)
-	token := c.Query("token")
-	if p.tokenValidator != nil && !p.tokenValidator(token) {
-		return c.Status(401).JSON(APIResponse{
-			Success: false,
-			Error:   "Unauthorized",
-		})
-	}
-
 	ctx := context.Background()
 
 	// Set SSE headers

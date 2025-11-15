@@ -2,15 +2,8 @@
 const TOAST_DURATION = 3000;           // milliseconds
 const ERROR_TOAST_DURATION = 10000;    // milliseconds
 
-// Authentication
-let authToken = localStorage.getItem('authToken') || '';
-
 // DOM Elements
-const loginScreen = document.getElementById('login-screen');
 const app = document.getElementById('app');
-const loginForm = document.getElementById('login-form');
-const loginError = document.getElementById('login-error');
-const passwordInput = document.getElementById('password');
 
 // Loading Overlay
 function showLoading(message = 'Communicating with daemon...') {
@@ -29,19 +22,11 @@ function hideLoading() {
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     
-    // Restore session if token exists
-    if (authToken) {
-        restoreSession();
-    }
+    // Load initial data
+    loadInitialData();
 });
 
 function setupEventListeners() {
-    // Login
-    loginForm.addEventListener('submit', handleLogin);
-    
-    // Logout
-    document.getElementById('logout-btn').addEventListener('click', handleLogout);
-    
     // Tab switching
     document.querySelectorAll('.nav-tab').forEach(tab => {
         tab.addEventListener('click', () => switchTab(tab.dataset.tab));
@@ -64,91 +49,9 @@ function setupEventListeners() {
     });
 }
 
-// Authentication
-async function handleLogin(e) {
-    e.preventDefault();
-    const password = passwordInput.value;
-    
-    try {
-        const response = await fetch('/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            authToken = data.token;
-            localStorage.setItem('authToken', authToken);
-            loginScreen.classList.add('hidden');
-            app.classList.remove('hidden');
-            loginError.classList.add('hidden');
-            passwordInput.value = '';
-            
-            // Load initial data
-            loadImages();
-            loadContainers();
-        } else {
-            showLoginError('Invalid password');
-        }
-    } catch (error) {
-        showLoginError('Connection error');
-    }
-}
-
-async function handleLogout() {
-    try {
-        await api('/logout', { method: 'POST' });
-    } catch (error) {
-        // Logout locally even if server call fails
-    }
-    
-    authToken = '';
-    localStorage.removeItem('authToken');
-    app.classList.add('hidden');
-    loginScreen.classList.remove('hidden');
-    passwordInput.focus();
-}
-
-// Session restoration
-async function restoreSession() {
-    try {
-        const response = await api('/api/images');
-        
-        if (response.ok) {
-            showApp();
-            loadInitialData();
-        } else if (response.status === 401) {
-            handleLogout();
-        } else {
-            // Other error, but auth might be OK
-            showApp();
-            loadInitialData();
-        }
-    } catch (error) {
-        // Network error - assume session is valid
-        if (error.message === 'Unauthorized') {
-            handleLogout();
-        } else {
-            showApp();
-        }
-    }
-}
-
-function showApp() {
-    loginScreen.classList.add('hidden');
-    app.classList.remove('hidden');
-}
-
 function loadInitialData() {
     loadImages();
     loadContainers();
-}
-
-function showLoginError(message) {
-    loginError.textContent = message;
-    loginError.classList.remove('hidden');
 }
 
 // Tab Management
@@ -183,15 +86,9 @@ async function api(url, options = {}) {
     const response = await fetch(url, {
         ...options,
         headers: {
-            'X-Auth-Token': authToken,
             ...options.headers
         }
     });
-    
-    if (response.status === 401) {
-        handleLogout();
-        throw new Error('Unauthorized');
-    }
     
     // Handle 500 errors with detailed error display
     if (response.status === 500) {
@@ -589,8 +486,8 @@ function viewLogs(containerId) {
         logsEventSource.close();
     }
     
-    // Pass token in URL since EventSource doesn't support headers
-    const url = `/api/containers/${containerId}/logs?token=${encodeURIComponent(authToken)}`;
+    // Create EventSource connection
+    const url = `/api/containers/${containerId}/logs`;
     logsEventSource = new EventSource(url);
     
     logsEventSource.onmessage = (event) => {

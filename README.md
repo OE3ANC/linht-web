@@ -9,6 +9,8 @@ LinHT Web Manager provides a simple web UI for managing containerized applicatio
 - **Web Shell**: Browser-based terminal access
 - **File Manager**: Upload, download, and manage files through the web interface
 - **Docker/Podman Management**: List, create, start, stop, and delete containers and images
+- **Hardware Control**: Complete SX1255 transceiver configuration and monitoring via SPI/GPIO
+
 
 ## Building
 

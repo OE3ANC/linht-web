@@ -29,6 +29,3 @@ func Get(name string) (PluginFactory, bool) {
 	factory, exists := registry[name]
 	return factory, exists
 }
-
-// TokenValidator is a function type for validating authentication tokens
-type TokenValidator func(token string) bool

@@ -2,8 +2,10 @@ package plugins
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -17,8 +19,7 @@ const (
 
 // FileManagerPlugin provides simple file management functionality
 type FileManagerPlugin struct {
-	tokenValidator TokenValidator
-	maxUploadSize  int64
+	maxUploadSize int64
 }
 
 // FileItem represents a file or directory
@@ -46,11 +47,6 @@ func NewFileManagerPlugin(maxUploadSize int64) (*FileManagerPlugin, error) {
 	return &FileManagerPlugin{
 		maxUploadSize: maxUploadSize,
 	}, nil
-}
-
-// SetTokenValidator sets the token validation function
-func (p *FileManagerPlugin) SetTokenValidator(validator TokenValidator) {
-	p.tokenValidator = validator
 }
 
 // Name returns the plugin identifier
@@ -188,8 +184,19 @@ func (p *FileManagerPlugin) uploadFile(c *fiber.Ctx) error {
 		return SendErrorMessage(c, 400, "No file provided")
 	}
 
+	// Log file details
+	slog.Info("File upload started",
+		"filename", file.Filename,
+		"size", file.Size,
+		"max_size", p.maxUploadSize,
+		"destination", dirPath)
+
 	// Check file size
 	if file.Size > p.maxUploadSize {
+		slog.Warn("File size exceeds limit",
+			"filename", file.Filename,
+			"size", file.Size,
+			"max_size", p.maxUploadSize)
 		return SendErrorMessage(c, 413, fmt.Sprintf("File too large (max %d bytes)", p.maxUploadSize))
 	}
 
@@ -202,10 +209,34 @@ func (p *FileManagerPlugin) uploadFile(c *fiber.Ctx) error {
 	// Build destination file path
 	destFile := filepath.Join(dirPath, filename)
 
-	// Save file
+	// Log memory usage before starting upload
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	slog.Info("Memory stats before file save",
+		"alloc", m.Alloc/1024/1024, // MB
+		"sys", m.Sys/1024/1024, // MB
+		"num_gc", m.NumGC)
+
+	// Save file with detailed error logging
+	startTime := time.Now()
 	if err := c.SaveFile(file, destFile); err != nil {
+		slog.Error("Failed to save file",
+			"filename", file.Filename,
+			"destination", destFile,
+			"error", err,
+			"duration", time.Since(startTime))
 		return SendError(c, 500, err)
 	}
+
+	// Log completion and memory usage after upload
+	runtime.ReadMemStats(&m)
+	slog.Info("File upload completed",
+		"filename", file.Filename,
+		"destination", destFile,
+		"size", file.Size,
+		"duration", time.Since(startTime),
+		"alloc_after", m.Alloc/1024/1024, // MB
+		"sys_after", m.Sys/1024/1024) // MB
 
 	return SendSuccess(c, nil, "File uploaded successfully")
 }

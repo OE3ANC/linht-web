@@ -5,18 +5,19 @@
 }
 
 :root {
-    --primary: #33ff33;
-    --primary-dark: #00cc00;
+    --primary: #b0b0b0;
+    --primary-dark: #808080;
     --danger: #ff3333;
     --danger-dark: #cc0000;
     --success: #00ff00;
-    --bg: #0a0e0a;
-    --surface: #0c140c;
-    --text: #33ff33;
-    --text-secondary: #20aa20;
-    --border: #1a3d1a;
-    --shadow: 0 0 10px rgba(0, 255, 0, 0.2);
-    --shadow-lg: 0 0 20px rgba(0, 255, 0, 0.3);
+    --logo-green: #33ff33;
+    --bg: #0d0d0d;
+    --surface: #1a1a1a;
+    --text: #e0e0e0;
+    --text-secondary: #909090;
+    --border: #404040;
+    --shadow: 0 0 10px rgba(176, 176, 176, 0.2);
+    --shadow-lg: 0 0 20px rgba(176, 176, 176, 0.3);
 }
 
 body {
@@ -24,7 +25,7 @@ body {
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
-    text-shadow: 0 0 2px rgba(51, 255, 51, 0.5);
+    text-shadow: 0 0 2px rgba(224, 224, 224, 0.3);
     position: relative;
     overflow-x: hidden;
     width: 100%;
@@ -63,40 +64,28 @@ body::before {
     overflow-x: hidden;
 }
 
-/* Login Screen */
-.login-container {
-    max-width: 400px;
-    margin: 100px auto;
-    padding: 40px;
-    background: var(--surface);
-    border: 2px solid var(--primary);
-    border-radius: 0;
-    box-shadow: var(--shadow-lg);
-    text-align: center;
-}
-
-/* Terminal Logo */
+/* Terminal Logo - Keep Green */
 .terminal-logo {
     font-size: 32px;
     font-weight: 600;
     margin-bottom: 32px;
     font-family: 'Courier New', 'Consolas', monospace;
-    color: var(--primary);
+    color: var(--logo-green);
     letter-spacing: 2px;
     text-shadow: 0 0 10px rgba(51, 255, 51, 0.8);
 }
 
 .prompt-symbol {
-    color: var(--primary);
+    color: var(--logo-green);
     margin-right: 4px;
 }
 
 .logo-text {
-    color: var(--primary);
+    color: var(--logo-green);
 }
 
 .cursor {
-    color: var(--primary);
+    color: var(--logo-green);
     font-weight: 900;
     font-size: 1.1em;
     animation: blink 1.5s ease-in-out infinite;
@@ -120,12 +109,6 @@ body::before {
 
 .nav-brand .cursor {
     font-weight: 900;
-}
-
-#login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
 }
 
 input[type="password"],
@@ -162,7 +145,7 @@ textarea:focus,
 select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 10px rgba(51, 255, 51, 0.3);
+    box-shadow: 0 0 10px rgba(176, 176, 176, 0.3);
 }
 
 /* Buttons */
@@ -184,8 +167,8 @@ button,
 
 button:hover,
 .btn:hover {
-    background: #1a3d1a;
-    box-shadow: 0 0 10px rgba(51, 255, 51, 0.5);
+    background: #404040;
+    box-shadow: 0 0 10px rgba(176, 176, 176, 0.5);
 }
 
 .btn-primary {
@@ -197,7 +180,7 @@ button:hover,
 .btn-primary:hover {
     background: var(--primary);
     color: #000;
-    box-shadow: 0 0 15px rgba(51, 255, 51, 0.7);
+    box-shadow: 0 0 15px rgba(176, 176, 176, 0.7);
 }
 
 .btn-danger {
@@ -238,7 +221,7 @@ button:hover,
 .nav-brand {
     font-size: 18px;
     font-weight: 600;
-    color: var(--primary);
+    color: var(--logo-green);
 }
 
 .nav-tabs {
@@ -260,7 +243,7 @@ button:hover,
 .nav-tab:hover {
     color: #000;
     background: var(--primary);
-    box-shadow: 0 0 15px rgba(51, 255, 51, 0.7);
+    box-shadow: 0 0 15px rgba(176, 176, 176, 0.7);
 }
 
 .nav-tab.active {
@@ -270,18 +253,6 @@ button:hover,
 
 .nav-tab.active:hover {
     color: #000;
-}
-
-.btn-logout {
-    background: transparent;
-    color: var(--danger);
-    border: 2px solid var(--danger);
-}
-
-.btn-logout:hover {
-    background: var(--danger);
-    color: #000;
-    box-shadow: 0 0 15px rgba(255, 51, 51, 0.7);
 }
 
 /* Tab Content */
@@ -620,11 +591,11 @@ label[for="import-file"] {
 .scan-container {
     width: 300px;
     height: 4px;
-    background: rgba(51, 255, 51, 0.1);
+    background: rgba(176, 176, 176, 0.1);
     border: 1px solid var(--primary);
     position: relative;
     overflow: hidden;
-    box-shadow: 0 0 10px rgba(51, 255, 51, 0.3);
+    box-shadow: 0 0 10px rgba(176, 176, 176, 0.3);
 }
 
 .scan-bar {
@@ -660,11 +631,11 @@ label[for="import-file"] {
 @keyframes pulse {
     0%, 100% {
         opacity: 1;
-        text-shadow: 0 0 5px rgba(51, 255, 51, 0.8);
+        text-shadow: 0 0 5px rgba(176, 176, 176, 0.8);
     }
     50% {
         opacity: 0.7;
-        text-shadow: 0 0 15px rgba(51, 255, 51, 1);
+        text-shadow: 0 0 15px rgba(176, 176, 176, 1);
     }
 }
 
@@ -759,7 +730,7 @@ label[for="import-file"] {
 
 .fm-breadcrumb-item:hover {
     color: var(--primary);
-    text-shadow: 0 0 5px rgba(51, 255, 51, 0.5);
+    text-shadow: 0 0 5px rgba(176, 176, 176, 0.5);
 }
 
 .fm-breadcrumb-current {
@@ -832,12 +803,13 @@ label[for="import-file"] {
 .fm-folder-name:hover,
 .fm-file-name:hover {
     color: var(--primary);
-    text-shadow: 0 0 5px rgba(51, 255, 51, 0.5);
+    text-shadow: 0 0 5px rgba(176, 176, 176, 0.5);
 }
 
 .btn-sm {
     padding: 6px 12px;
     font-size: 12px;
+    min-height: 33px;
 }
 
 /* File manager specific loading/empty states */
@@ -862,5 +834,219 @@ label[for="import-file"] {
     .btn-sm {
         padding: 4px 8px;
         font-size: 11px;
+    }
+}
+
+/* Hardware Module Styles */
+.hw-section {
+    background: var(--surface);
+    border: 2px solid var(--primary);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.hw-section:last-child {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+    overflow: hidden;
+}
+
+.hw-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 16px;
+    text-shadow: 0 0 5px rgba(176, 176, 176, 0.5);
+}
+
+.hw-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.hw-status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+}
+
+.hw-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.hw-value {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.hw-value.status-ok {
+    color: var(--success);
+    text-shadow: 0 0 5px var(--success);
+}
+
+.hw-value.status-error {
+    color: var(--danger);
+    text-shadow: 0 0 5px var(--danger);
+}
+
+.hw-value.status-locked {
+    color: var(--success);
+}
+
+.hw-value.status-unlocked {
+    color: var(--danger);
+}
+
+.hw-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.hw-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hw-control-row {
+    display: flex;
+    gap: 8px;
+}
+
+.hw-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--primary);
+    background: #000;
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.hw-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 5px rgba(176, 176, 176, 0.3);
+}
+
+.hw-register-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.hw-register-table-container {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    overflow-x: auto;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.hw-register-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.hw-register-table thead {
+    background: var(--bg);
+    border-bottom: 2px solid var(--primary);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.hw-register-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--primary);
+    border-right: 1px solid var(--border);
+}
+
+.hw-register-table th:last-child {
+    border-right: none;
+}
+
+.hw-register-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+}
+
+.hw-register-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.hw-register-table tbody tr:hover {
+    background: var(--bg);
+}
+
+.hw-register-table td {
+    padding: 10px 12px;
+    border-right: 1px solid var(--border);
+}
+
+.hw-register-table td:last-child {
+    border-right: none;
+}
+
+.hw-register-name {
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.hw-register-addr {
+    font-family: 'Courier New', monospace;
+    color: var(--primary);
+}
+
+.hw-register-value {
+    font-family: 'Courier New', monospace;
+}
+
+.hw-reg-input {
+    width: 50px;
+    padding: 4px 6px;
+    font-size: 12px;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+}
+
+.hw-reg-input-bin {
+    width: 100px;
+    padding: 4px 6px;
+    font-size: 12px;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+/* Hardware modal for register editing */
+.hw-edit-modal .modal-content {
+    max-width: 400px;
+}
+
+/* Responsive hardware styles */
+@media (max-width: 768px) {
+    .hw-status-grid,
+    .hw-controls-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hw-register-table {
+        font-size: 12px;
+    }
+
+    .hw-register-table th,
+    .hw-register-table td {
+        padding: 8px;
     }
 }

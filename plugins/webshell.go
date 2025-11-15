@@ -25,11 +25,10 @@ const (
 
 // WebShellPlugin provides terminal access to host and containers
 type WebShellPlugin struct {
-	dockerClient   *client.Client
-	sessions       map[string]*Session
-	sessionsMu     sync.RWMutex
-	tokenValidator TokenValidator
-	defaultShell   string
+	dockerClient *client.Client
+	sessions     map[string]*Session
+	sessionsMu   sync.RWMutex
+	defaultShell string
 }
 
 // Session represents an active terminal session
@@ -69,11 +68,6 @@ func NewWebShellPlugin(dockerClient *client.Client, defaultShell string) (*WebSh
 	}, nil
 }
 
-// SetTokenValidator sets the token validation function
-func (p *WebShellPlugin) SetTokenValidator(validator TokenValidator) {
-	p.tokenValidator = validator
-}
-
 // Name returns the plugin identifier
 func (p *WebShellPlugin) Name() string {
 	return "webshell"
@@ -106,13 +100,6 @@ func (p *WebShellPlugin) Shutdown() error {
 
 // handleWebSocket handles WebSocket connections for terminal I/O
 func (p *WebShellPlugin) handleWebSocket(c *websocket.Conn) {
-	// Validate token
-	token := c.Query("token")
-	if p.tokenValidator != nil && !p.tokenValidator(token) {
-		c.WriteJSON(fiber.Map{"error": "Unauthorized"})
-		return
-	}
-
 	sessionType := c.Query("type")
 	containerID := c.Query("container")
 
@@ -156,6 +143,12 @@ func (p *WebShellPlugin) createHostSession() (*Session, error) {
 	// Start shell with PTY
 	cmd := exec.Command(p.defaultShell)
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
+
+	// Set initial directory to home directory
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		cmd.Dir = homeDir
+	}
 
 	ptmx, err := pty.Start(cmd)
 	if err != nil {

@@ -9,22 +9,8 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <!-- Login Screen -->
-    <div id="login-screen" class="screen">
-        <div class="login-container">
-            <div class="terminal-logo">
-                <span class="prompt-symbol">&gt;</span><span class="logo-text">LinHT</span><span class="cursor">_</span>
-            </div>
-            <form id="login-form">
-                <input type="password" id="password" placeholder="Password" required autofocus>
-                <button type="submit">Login</button>
-            </form>
-            <div id="login-error" class="error hidden"></div>
-        </div>
-    </div>
-
     <!-- Main Application -->
-    <div id="app" class="screen hidden">
+    <div id="app" class="screen">
         <!-- Navigation -->
         <nav class="navbar">
             <div class="nav-brand">
@@ -35,9 +21,151 @@
                 <button class="nav-tab" data-tab="files">Files</button>
                 <button class="nav-tab" data-tab="containers">Containers</button>
                 <button class="nav-tab" data-tab="images">Images</button>
+                <button class="nav-tab" data-tab="hardware">Hardware</button>
             </div>
-            <button id="logout-btn" class="btn-logout">Logout</button>
         </nav>
+
+        <!-- Hardware Tab -->
+        <div id="hardware-tab" class="tab-content hidden">
+            <div class="toolbar">
+                <h2>SX1255 Hardware Control</h2>
+                <div class="toolbar-actions">
+                    <button id="hw-init-btn" class="btn btn-primary">Initialize</button>
+                    <button id="hw-reset-btn" class="btn">Reset</button>
+                    <button id="hw-close-btn" class="btn btn-danger">Close</button>
+                    <button id="hw-refresh-btn" class="btn">⟳ Refresh</button>
+                </div>
+            </div>
+
+            <!-- Device Status Section -->
+            <div class="hw-section">
+                <h3 class="hw-section-title">&gt; DEVICE STATUS</h3>
+                <div class="hw-status-grid">
+                    <div class="hw-status-item">
+                        <span class="hw-label">Connection:</span>
+                        <span id="hw-conn-status" class="hw-value">Not initialized</span>
+                    </div>
+                    <div class="hw-status-item">
+                        <span class="hw-label">Version:</span>
+                        <span id="hw-version" class="hw-value">--</span>
+                    </div>
+                    <div class="hw-status-item">
+                        <span class="hw-label">RX Freq:</span>
+                        <span id="hw-rx-freq" class="hw-value">-- MHz</span>
+                    </div>
+                    <div class="hw-status-item">
+                        <span class="hw-label">TX Freq:</span>
+                        <span id="hw-tx-freq" class="hw-value">-- MHz</span>
+                    </div>
+                    <div class="hw-status-item">
+                        <span class="hw-label">RX PLL:</span>
+                        <span id="hw-rx-pll" class="hw-value">--</span>
+                    </div>
+                    <div class="hw-status-item">
+                        <span class="hw-label">TX PLL:</span>
+                        <span id="hw-tx-pll" class="hw-value">--</span>
+                    </div>
+                    <div class="hw-status-item">
+                        <span class="hw-label">XOSC:</span>
+                        <span id="hw-xosc" class="hw-value">--</span>
+                    </div>
+                    <div class="hw-status-item">
+                        <span class="hw-label">Mode:</span>
+                        <span id="hw-mode" class="hw-value">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Controls Section -->
+            <div class="hw-section">
+                <h3 class="hw-section-title">&gt; QUICK CONTROLS</h3>
+                <div class="hw-controls-grid">
+                    <div class="hw-control-group">
+                        <label class="hw-label">Operating Mode:</label>
+                        <div class="hw-control-row">
+                            <select id="hw-mode-select" class="hw-input">
+                                <option value="sleep">Sleep</option>
+                                <option value="standby">Standby</option>
+                                <option value="rx">RX</option>
+                                <option value="tx">TX</option>
+                                <option value="tx_full">TX Full (with PA)</option>
+                                <option value="full_duplex">Full-Duplex (RX+TX+PA)</option>
+                            </select>
+                            <button id="hw-set-mode-btn" class="btn btn-sm">Set</button>
+                        </div>
+                    </div>
+
+                    <div class="hw-control-group">
+                        <label class="hw-label">RX Frequency (MHz):</label>
+                        <div class="hw-control-row">
+                            <input type="number" id="hw-rx-freq-input" class="hw-input"
+                                   value="433.475" step="0.001" min="400" max="510">
+                            <button id="hw-set-rx-freq-btn" class="btn btn-sm">Set</button>
+                        </div>
+                    </div>
+
+                    <div class="hw-control-group">
+                        <label class="hw-label">TX Frequency (MHz):</label>
+                        <div class="hw-control-row">
+                            <input type="number" id="hw-tx-freq-input" class="hw-input"
+                                   value="438.000" step="0.001" min="400" max="510">
+                            <button id="hw-set-tx-freq-btn" class="btn btn-sm">Set</button>
+                        </div>
+                    </div>
+
+                    <div class="hw-control-group">
+                        <label class="hw-label">LNA Gain (dB):</label>
+                        <div class="hw-control-row">
+                            <input type="number" id="hw-lna-gain-input" class="hw-input"
+                                   value="48" min="0" max="48" step="6">
+                            <button id="hw-set-lna-gain-btn" class="btn btn-sm">Set</button>
+                        </div>
+                    </div>
+
+                    <div class="hw-control-group">
+                        <label class="hw-label">PGA Gain (dB):</label>
+                        <div class="hw-control-row">
+                            <input type="number" id="hw-pga-gain-input" class="hw-input"
+                                   value="30" min="0" max="30" step="2">
+                            <button id="hw-set-pga-gain-btn" class="btn btn-sm">Set</button>
+                        </div>
+                    </div>
+
+                    <div class="hw-control-group">
+                        <label class="hw-label">TX/RX Switch:</label>
+                        <div class="hw-control-row">
+                            <button id="hw-txrx-rx-btn" class="btn btn-sm">RX</button>
+                            <button id="hw-txrx-tx-btn" class="btn btn-sm">TX</button>
+                            <span id="hw-txrx-status" class="hw-value">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register Viewer Section -->
+            <div class="hw-section">
+                <h3 class="hw-section-title">&gt; REGISTER VIEWER</h3>
+                <div class="hw-register-controls">
+                    <button id="hw-read-all-regs-btn" class="btn btn-sm">Read All</button>
+                </div>
+                <div class="hw-register-table-container">
+                    <table class="hw-register-table">
+                        <thead>
+                            <tr>
+                                <th>Addr</th>
+                                <th>Name</th>
+                                <th>Hex</th>
+                                <th>Binary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hw-register-list">
+                            <tr><td colspan="5" class="loading">Click "Read All" to view registers</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
         <!-- Images Tab -->
         <div id="images-tab" class="tab-content hidden">
@@ -224,5 +352,6 @@
     <script src="/app.js"></script>
     <script src="/filemanager.js"></script>
     <script src="/terminal.js"></script>
+    <script src="/hardware.js"></script>
 </body>
 </html>

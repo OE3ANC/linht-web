@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
-	"sync"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -16,22 +14,17 @@ import (
 	"github.com/gofiber/fiber/v2"
 	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/linht/web-manager/plugins"
-	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v3"
 )
 
 // Configuration constants
 const (
-	// Server timeouts
-	ServerReadTimeout  = 120 * time.Second
-	ServerWriteTimeout = 120 * time.Second
+	// Server timeouts (increased for large file transfers on embedded devices)
+	ServerReadTimeout  = 600 * time.Second // 10 minutes
+	ServerWriteTimeout = 600 * time.Second // 10 minutes
 
 	// Upload limits
 	MaxBodySize = 10 * 1024 * 1024 * 1024 // 10 GB
-
-	// Session management (24-hour expiry)
-	SessionDuration = 24 * time.Hour
-	TokenBytes      = 32
 )
 
 type Config struct {
@@ -39,9 +32,6 @@ type Config struct {
 		Port string `yaml:"port"`
 		Host string `yaml:"host"`
 	} `yaml:"server"`
-	Auth struct {
-		PasswordHash string `yaml:"password_hash"`
-	} `yaml:"auth"`
 	Docker struct {
 		Socket string `yaml:"socket"`
 	} `yaml:"docker"`
@@ -55,19 +45,21 @@ type Config struct {
 	FileManager struct {
 		MaxUploadSize int64 `yaml:"max_upload_size"`
 	} `yaml:"filemanager"`
+	Hardware struct {
+		SX1255 struct {
+			SPIDevice string `yaml:"spi_device"`
+			SPISpeed  uint32 `yaml:"spi_speed"`
+			GPIOChip  string `yaml:"gpio_chip"`
+			ResetPin  int    `yaml:"reset_pin"`
+			TxRxPin   int    `yaml:"tx_rx_pin"`
+			ClockFreq uint32 `yaml:"clock_freq"`
+		} `yaml:"sx1255"`
+	} `yaml:"hardware"`
 	Plugins []string `yaml:"plugins"`
 }
 
-// Session represents a simple authenticated session for local use
-type Session struct {
-	Token     string
-	ExpiresAt time.Time
-}
-
 var (
-	config         Config
-	currentSession *Session
-	sessionMu      sync.RWMutex
+	config Config
 )
 
 func main() {
@@ -84,6 +76,13 @@ func main() {
 	}
 	slog.Info("Configuration loaded")
 
+	// Log server configuration
+	slog.Info("Server configuration",
+		"read_timeout", ServerReadTimeout,
+		"write_timeout", ServerWriteTimeout,
+		"max_body_size", MaxBodySize,
+		"filemanager_max_upload", config.FileManager.MaxUploadSize)
+
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  ServerReadTimeout,
@@ -97,15 +96,24 @@ func main() {
 		Format: "[${time}] ${status} - ${method} ${path} (${latency})\n",
 	}))
 
+	// Add memory tracking middleware for large file operations
+	app.Use(func(c *fiber.Ctx) error {
+		// Track memory for upload and import endpoints
+		if c.Path() == "/api/filemanager/upload" || c.Path() == "/api/images/import" {
+			var m runtime.MemStats
+			runtime.ReadMemStats(&m)
+			slog.Info("Request started",
+				"path", c.Path(),
+				"method", c.Method(),
+				"content_length", c.Get("Content-Length"),
+				"alloc_mb", m.Alloc/1024/1024,
+				"sys_mb", m.Sys/1024/1024)
+		}
+		return c.Next()
+	})
+
 	// Serve static files
 	app.Static("/", "./web")
-
-	// Login/logout endpoints (no auth required for login)
-	app.Post("/login", handleLogin)
-	app.Post("/logout", handleLogout)
-
-	// Auth middleware for all other API routes
-	app.Use("/api", authMiddleware)
 
 	// Create shared Docker client
 	dockerClient, err := createDockerClient(config.Docker.Socket)
@@ -152,89 +160,6 @@ func loadConfig(path string) error {
 	return yaml.Unmarshal(data, &config)
 }
 
-func handleLogin(c *fiber.Ctx) error {
-	var req struct {
-		Password string `json:"password"`
-	}
-
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
-	}
-
-	// Check password
-	if err := bcrypt.CompareHashAndPassword([]byte(config.Auth.PasswordHash), []byte(req.Password)); err != nil {
-		slog.Warn("Failed login attempt", "ip", c.IP())
-		return c.Status(401).JSON(fiber.Map{"error": "Invalid password"})
-	}
-
-	slog.Info("Successful login", "ip", c.IP())
-
-	// Generate new session (replaces any existing session for local-only use)
-	sessionMu.Lock()
-	currentSession = &Session{
-		Token:     generateToken(),
-		ExpiresAt: time.Now().Add(SessionDuration),
-	}
-	sessionMu.Unlock()
-
-	return c.JSON(fiber.Map{
-		"success": true,
-		"token":   currentSession.Token,
-		"expires": currentSession.ExpiresAt.Unix(),
-	})
-}
-
-func handleLogout(c *fiber.Ctx) error {
-	sessionMu.Lock()
-	currentSession = nil
-	sessionMu.Unlock()
-	slog.Info("User logged out", "ip", c.IP())
-	return c.JSON(fiber.Map{"success": true})
-}
-
-func authMiddleware(c *fiber.Ctx) error {
-	// Check for token in header first, fallback to query parameter (for WebSocket/SSE)
-	token := c.Get("X-Auth-Token")
-	if token == "" {
-		token = c.Query("token")
-	}
-
-	if !validateToken(token) {
-		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized"})
-	}
-	return c.Next()
-}
-
-func validateToken(token string) bool {
-	if token == "" {
-		return false
-	}
-
-	sessionMu.RLock()
-	defer sessionMu.RUnlock()
-
-	if currentSession == nil {
-		return false
-	}
-
-	// Check token match and expiration
-	if currentSession.Token != token {
-		return false
-	}
-
-	if time.Now().After(currentSession.ExpiresAt) {
-		return false
-	}
-
-	return true
-}
-
-func generateToken() string {
-	b := make([]byte, TokenBytes)
-	rand.Read(b)
-	return hex.EncodeToString(b)
-}
-
 func createDockerClient(socket string) (*client.Client, error) {
 	cli, err := client.NewClientWithOpts(
 		client.WithHost(socket),
@@ -268,22 +193,22 @@ func initPlugins(app *fiber.App, dockerClient *client.Client) error {
 			pluginConfig = map[string]interface{}{
 				"max_upload_size": config.FileManager.MaxUploadSize,
 			}
+		case "hardware":
+			pluginConfig = map[string]interface{}{
+				"sx1255": map[string]interface{}{
+					"spi_device": config.Hardware.SX1255.SPIDevice,
+					"spi_speed":  config.Hardware.SX1255.SPISpeed,
+					"gpio_chip":  config.Hardware.SX1255.GPIOChip,
+					"reset_pin":  config.Hardware.SX1255.ResetPin,
+					"tx_rx_pin":  config.Hardware.SX1255.TxRxPin,
+					"clock_freq": config.Hardware.SX1255.ClockFreq,
+				},
+			}
 		}
 
 		plugin, err := factory(pluginConfig)
 		if err != nil {
 			return err
-		}
-
-		// Set token validator for plugins
-		if dockerPlugin, ok := plugin.(*plugins.DockerPlugin); ok {
-			dockerPlugin.SetTokenValidator(validateToken)
-		}
-		if webshellPlugin, ok := plugin.(*plugins.WebShellPlugin); ok {
-			webshellPlugin.SetTokenValidator(validateToken)
-		}
-		if fileManagerPlugin, ok := plugin.(*plugins.FileManagerPlugin); ok {
-			fileManagerPlugin.SetTokenValidator(validateToken)
 		}
 
 		plugin.RegisterRoutes(app)

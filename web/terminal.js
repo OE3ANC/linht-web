@@ -71,18 +71,16 @@ class WebShellTerminal {
     // Connect to host shell
     connectHost() {
         this.sessionType = 'host';
-        const token = authToken;
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${location.host}/api/webshell/ws?type=host&token=${encodeURIComponent(token)}`;
+        const wsUrl = `${protocol}//${location.host}/api/webshell/ws?type=host`;
         this.connect(wsUrl);
     }
     
     // Connect to container shell
     connectContainer(containerId) {
         this.sessionType = 'container';
-        const token = authToken;
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${location.host}/api/webshell/ws?type=container&container=${encodeURIComponent(containerId)}&token=${encodeURIComponent(token)}`;
+        const wsUrl = `${protocol}//${location.host}/api/webshell/ws?type=container&container=${encodeURIComponent(containerId)}`;
         this.connect(wsUrl);
     }
     
