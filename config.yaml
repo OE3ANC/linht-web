@@ -15,6 +15,11 @@ plugins:
   - webshell
   - filemanager
   - hardware
+  - cps
+
+# CPS plugin settings
+cps:
+  settings_path: "/usr/share/linht/settings.yaml"
 
 # Webshell plugin settings
 webshell:

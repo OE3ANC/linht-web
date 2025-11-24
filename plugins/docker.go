@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -99,19 +100,8 @@ func (p *DockerPlugin) importImage(c *fiber.Ctx) error {
 		"size", file.Size)
 
 	// Validate file type (basic check on extension)
-	filename := file.Filename
-	if len(filename) > 0 {
-		validExtensions := []string{".tar", ".tar.gz", ".tgz"}
-		isValid := false
-		for _, ext := range validExtensions {
-			if len(filename) >= len(ext) && filename[len(filename)-len(ext):] == ext {
-				isValid = true
-				break
-			}
-		}
-		if !isValid {
-			return SendErrorMessage(c, 400, "Invalid file type. Only .tar, .tar.gz, or .tgz files are accepted")
-		}
+	if !hasValidImageExtension(file.Filename) {
+		return SendErrorMessage(c, 400, "Invalid file type. Only .tar, .tar.gz, or .tgz files are accepted")
 	}
 
 	// Log memory usage before starting import
@@ -362,6 +352,17 @@ func (p *DockerPlugin) streamLogs(c *fiber.Ctx) error {
 	})
 
 	return nil
+}
+
+// hasValidImageExtension checks if the filename has a valid Docker image extension
+func hasValidImageExtension(filename string) bool {
+	validExtensions := []string{".tar", ".tar.gz", ".tgz"}
+	for _, ext := range validExtensions {
+		if strings.HasSuffix(strings.ToLower(filename), ext) {
+			return true
+		}
+	}
+	return false
 }
 
 // Register the plugin

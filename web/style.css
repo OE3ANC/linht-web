@@ -1,3 +1,7 @@
+/* ==========================================================================
+   CSS Reset & Variables
+   ========================================================================== */
+
 * {
     margin: 0;
     padding: 0;
@@ -18,10 +22,15 @@
     --border: #404040;
     --shadow: 0 0 10px rgba(176, 176, 176, 0.2);
     --shadow-lg: 0 0 20px rgba(176, 176, 176, 0.3);
+    --font-mono: 'Courier New', 'Consolas', monospace;
 }
 
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+
 body {
-    font-family: 'Courier New', 'Consolas', monospace;
+    font-family: var(--font-mono);
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
@@ -50,7 +59,10 @@ body::before {
     z-index: 9999;
 }
 
-/* Screens */
+/* ==========================================================================
+   Screens & Layout
+   ========================================================================== */
+
 .screen {
     display: none;
 }
@@ -64,12 +76,15 @@ body::before {
     overflow-x: hidden;
 }
 
-/* Terminal Logo - Keep Green */
+/* ==========================================================================
+   Logo & Branding
+   ========================================================================== */
+
 .terminal-logo {
     font-size: 32px;
     font-weight: 600;
     margin-bottom: 32px;
-    font-family: 'Courier New', 'Consolas', monospace;
+    font-family: var(--font-mono);
     color: var(--logo-green);
     letter-spacing: 2px;
     text-shadow: 0 0 10px rgba(51, 255, 51, 0.8);
@@ -92,15 +107,10 @@ body::before {
 }
 
 @keyframes blink {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0;
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
 }
 
-/* Nav brand logo styling */
 .nav-brand .prompt-symbol,
 .nav-brand .logo-text,
 .nav-brand .cursor {
@@ -111,17 +121,35 @@ body::before {
     font-weight: 900;
 }
 
+/* ==========================================================================
+   Form Elements - Unified Styles
+   ========================================================================== */
+
 input[type="password"],
 input[type="text"],
+input[type="number"],
 textarea,
-select {
-    padding: 12px;
+select,
+.hw-input,
+.cps-input {
+    padding: 8px 12px;
     border: 1px solid var(--primary);
     border-radius: 0;
     font-size: 14px;
-    font-family: 'Courier New', 'Consolas', monospace;
+    font-family: var(--font-mono);
     background: #000;
     color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.hw-input:focus,
+.cps-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 10px rgba(176, 176, 176, 0.3);
 }
 
 select {
@@ -140,15 +168,17 @@ select option {
     padding: 8px;
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 10px rgba(176, 176, 176, 0.3);
+/* Form group padding override */
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: 12px;
 }
 
-/* Buttons */
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
 button,
 .btn {
     padding: 10px 20px;
@@ -160,7 +190,7 @@ button,
     transition: all 0.2s;
     background: var(--surface);
     color: var(--text);
-    font-family: 'Courier New', 'Consolas', monospace;
+    font-family: var(--font-mono);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -207,7 +237,16 @@ button:hover,
     box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
 }
 
-/* Navigation */
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-height: 33px;
+}
+
+/* ==========================================================================
+   Navigation
+   ========================================================================== */
+
 .navbar {
     background: var(--surface);
     border-bottom: 2px solid var(--primary);
@@ -255,7 +294,10 @@ button:hover,
     color: #000;
 }
 
-/* Tab Content */
+/* ==========================================================================
+   Tab Content
+   ========================================================================== */
+
 .tab-content {
     display: none;
     padding: 24px;
@@ -268,7 +310,10 @@ button:hover,
     flex-direction: column;
 }
 
-/* Toolbar */
+/* ==========================================================================
+   Toolbar
+   ========================================================================== */
+
 .toolbar {
     display: flex;
     justify-content: space-between;
@@ -286,7 +331,10 @@ button:hover,
     gap: 12px;
 }
 
-/* List Container */
+/* ==========================================================================
+   List Container & Cards
+   ========================================================================== */
+
 .list-container {
     background: var(--surface);
     border-radius: 0;
@@ -294,19 +342,14 @@ button:hover,
     overflow: hidden;
 }
 
-.loading {
-    padding: 40px;
-    text-align: center;
-    color: var(--text-secondary);
-}
-
+/* Unified loading/empty state */
+.loading,
 .empty {
     padding: 40px;
     text-align: center;
     color: var(--text-secondary);
 }
 
-/* Card */
 .card {
     padding: 16px 20px;
     border-bottom: 1px solid var(--border);
@@ -347,7 +390,10 @@ button:hover,
     font-size: 13px;
 }
 
-/* Status Badge */
+/* ==========================================================================
+   Status Badges
+   ========================================================================== */
+
 .status {
     display: inline-block;
     padding: 4px 8px;
@@ -371,14 +417,10 @@ button:hover,
     text-shadow: 0 0 5px #ff3333;
 }
 
-.status-created {
-    background: transparent;
-    color: #33ff33;
-    border-color: #33ff33;
-    text-shadow: 0 0 5px #33ff33;
-}
+/* ==========================================================================
+   Modal
+   ========================================================================== */
 
-/* Modal */
 .modal {
     position: fixed;
     top: 0;
@@ -460,11 +502,14 @@ button:hover,
     margin-top: 24px;
 }
 
-/* Logs Container */
+/* ==========================================================================
+   Logs Container
+   ========================================================================== */
+
 .logs-container {
     background: #000;
     color: var(--text);
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
     padding: 16px;
     height: 500px;
@@ -477,7 +522,10 @@ button:hover,
     word-break: break-all;
 }
 
-/* Toast */
+/* ==========================================================================
+   Toast Notifications
+   ========================================================================== */
+
 .toast {
     position: fixed;
     bottom: 24px;
@@ -517,7 +565,10 @@ button:hover,
     font-size: 11px;
 }
 
-/* Utility */
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
 .hidden {
     display: none !important;
 }
@@ -528,35 +579,10 @@ button:hover,
     margin-top: 12px;
 }
 
-/* File input label */
-label[for="import-file"] {
-    cursor: pointer;
-}
+/* ==========================================================================
+   Loading Overlay
+   ========================================================================== */
 
-/* Responsive */
-@media (max-width: 768px) {
-    .toolbar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-    }
-
-    .card {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .card-actions {
-        width: 100%;
-    }
-
-    .card-actions button {
-        flex: 1;
-    }
-}
-
-/* Loading Overlay */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -585,9 +611,20 @@ label[for="import-file"] {
     color: var(--primary);
     margin-bottom: 20px;
     letter-spacing: 2px;
+    animation: pulse 2s ease-in-out infinite;
 }
 
-/* Scanning Bar Animation */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        text-shadow: 0 0 5px rgba(176, 176, 176, 0.8);
+    }
+    50% {
+        opacity: 0.7;
+        text-shadow: 0 0 15px rgba(176, 176, 176, 1);
+    }
+}
+
 .scan-container {
     width: 300px;
     height: 4px;
@@ -604,50 +641,27 @@ label[for="import-file"] {
     left: 0;
     height: 100%;
     width: 30%;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        var(--primary),
-        transparent
-    );
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
     animation: scan 2s ease-in-out infinite;
     box-shadow: 0 0 20px var(--primary);
 }
 
 @keyframes scan {
-    0% {
-        left: -30%;
-    }
-    100% {
-        left: 100%;
-    }
+    0% { left: -30%; }
+    100% { left: 100%; }
 }
 
-/* Pulse effect for loading text */
-.loading-text {
-    animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-        text-shadow: 0 0 5px rgba(176, 176, 176, 0.8);
-    }
-    50% {
-        opacity: 0.7;
-        text-shadow: 0 0 15px rgba(176, 176, 176, 1);
-    }
-}
-
-/* Status message */
 .loading-status {
     margin-top: 16px;
     font-size: 13px;
     color: var(--text-secondary);
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
 }
 
-/* Terminal Styles */
+/* ==========================================================================
+   Terminal Styles
+   ========================================================================== */
+
 .terminal-wrapper {
     padding: 20px;
     background: #000;
@@ -665,7 +679,6 @@ label[for="import-file"] {
     width: 100%;
 }
 
-/* Override xterm.js default styles to match our theme */
 .xterm {
     height: 100% !important;
     padding: 10px !important;
@@ -679,7 +692,7 @@ label[for="import-file"] {
     cursor: text;
 }
 
-/* Scrollbar for terminal */
+/* Terminal Scrollbar */
 .xterm .xterm-viewport::-webkit-scrollbar {
     width: 8px;
 }
@@ -709,13 +722,82 @@ label[for="import-file"] {
     box-shadow: var(--shadow);
 }
 
-/* File Manager Styles */
+/* ==========================================================================
+   Unified Table Styles (File Manager & Hardware)
+   ========================================================================== */
+
+/* Base table class - apply to all data tables */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table thead {
+    background: var(--bg);
+    border-bottom: 2px solid var(--primary);
+}
+
+.data-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--primary);
+    border-right: 1px solid var(--border);
+}
+
+.data-table th:last-child {
+    border-right: none;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+}
+
+.data-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background: var(--bg);
+}
+
+.data-table td {
+    padding: 12px 16px;
+    border-right: 1px solid var(--border);
+}
+
+.data-table td:last-child {
+    border-right: none;
+}
+
+/* Hardware register table - extends data-table with sticky header and smaller text */
+.data-table.hw-register-table {
+    font-size: 13px;
+}
+
+.data-table.hw-register-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.data-table.hw-register-table th,
+.data-table.hw-register-table td {
+    padding: 10px 12px;
+}
+
+/* ==========================================================================
+   File Manager Styles
+   ========================================================================== */
+
 .fm-breadcrumb-container {
     background: var(--surface);
     border: 2px solid var(--border);
     border-bottom: none;
     padding: 12px 20px;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
 }
 
 #fm-breadcrumb {
@@ -748,51 +830,6 @@ label[for="import-file"] {
     overflow-x: auto;
 }
 
-.fm-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-.fm-table thead {
-    background: var(--bg);
-    border-bottom: 2px solid var(--primary);
-}
-
-.fm-table th {
-    padding: 12px 16px;
-    text-align: left;
-    font-weight: 600;
-    color: var(--primary);
-    border-right: 1px solid var(--border);
-}
-
-.fm-table th:last-child {
-    border-right: none;
-}
-
-.fm-table tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.2s;
-}
-
-.fm-table tbody tr:last-child {
-    border-bottom: none;
-}
-
-.fm-table tbody tr:hover {
-    background: var(--bg);
-}
-
-.fm-table td {
-    padding: 12px 16px;
-    border-right: 1px solid var(--border);
-}
-
-.fm-table td:last-child {
-    border-right: none;
-}
-
 .fm-folder-name,
 .fm-file-name {
     cursor: pointer;
@@ -806,38 +843,10 @@ label[for="import-file"] {
     text-shadow: 0 0 5px rgba(176, 176, 176, 0.5);
 }
 
-.btn-sm {
-    padding: 6px 12px;
-    font-size: 12px;
-    min-height: 33px;
-}
+/* ==========================================================================
+   Hardware Module Styles
+   ========================================================================== */
 
-/* File manager specific loading/empty states */
-.fm-table .loading,
-.fm-table .empty {
-    padding: 40px 20px;
-    text-align: center;
-    color: var(--text-secondary);
-}
-
-/* Responsive for file manager */
-@media (max-width: 768px) {
-    .fm-table {
-        font-size: 12px;
-    }
-    
-    .fm-table th,
-    .fm-table td {
-        padding: 8px 12px;
-    }
-    
-    .btn-sm {
-        padding: 4px 8px;
-        font-size: 11px;
-    }
-}
-
-/* Hardware Module Styles */
 .hw-section {
     background: var(--surface);
     border: 2px solid var(--primary);
@@ -853,12 +862,20 @@ label[for="import-file"] {
     overflow: hidden;
 }
 
-.hw-section-title {
+/* Unified section title style */
+.hw-section-title,
+.cps-section-title {
     font-size: 16px;
     font-weight: 600;
-    color: var(--primary);
+    color: var(--success);
     margin-bottom: 16px;
-    text-shadow: 0 0 5px rgba(176, 176, 176, 0.5);
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.cps-section-title {
+    font-size: 14px;
+    margin: 0;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
 }
 
 .hw-status-grid {
@@ -922,18 +939,6 @@ label[for="import-file"] {
 
 .hw-input {
     flex: 1;
-    padding: 8px 12px;
-    border: 1px solid var(--primary);
-    background: #000;
-    color: var(--text);
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-}
-
-.hw-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 5px rgba(176, 176, 176, 0.3);
 }
 
 .hw-register-controls {
@@ -950,66 +955,18 @@ label[for="import-file"] {
     flex: 1;
 }
 
-.hw-register-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-
-.hw-register-table thead {
-    background: var(--bg);
-    border-bottom: 2px solid var(--primary);
-    position: sticky;
-    top: 0;
-    z-index: 1;
-}
-
-.hw-register-table th {
-    padding: 10px 12px;
-    text-align: left;
-    font-weight: 600;
-    color: var(--primary);
-    border-right: 1px solid var(--border);
-}
-
-.hw-register-table th:last-child {
-    border-right: none;
-}
-
-.hw-register-table tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.2s;
-}
-
-.hw-register-table tbody tr:last-child {
-    border-bottom: none;
-}
-
-.hw-register-table tbody tr:hover {
-    background: var(--bg);
-}
-
-.hw-register-table td {
-    padding: 10px 12px;
-    border-right: 1px solid var(--border);
-}
-
-.hw-register-table td:last-child {
-    border-right: none;
-}
-
 .hw-register-name {
     color: var(--text-secondary);
     font-size: 11px;
 }
 
 .hw-register-addr {
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     color: var(--primary);
 }
 
 .hw-register-value {
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
 }
 
 .hw-reg-input {
@@ -1017,7 +974,7 @@ label[for="import-file"] {
     padding: 4px 6px;
     font-size: 12px;
     text-align: center;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
 }
 
 .hw-reg-input-bin {
@@ -1025,28 +982,154 @@ label[for="import-file"] {
     padding: 4px 6px;
     font-size: 12px;
     text-align: center;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     letter-spacing: 1px;
 }
 
-/* Hardware modal for register editing */
-.hw-edit-modal .modal-content {
-    max-width: 400px;
+/* ==========================================================================
+   CPS Styles
+   ========================================================================== */
+
+.cps-container {
+    background: var(--surface);
+    border: 2px solid var(--primary);
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
 }
 
-/* Responsive hardware styles */
+.cps-section {
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+}
+
+.cps-section:last-child {
+    margin-bottom: 0;
+}
+
+.cps-nested-section {
+    margin: 8px 0;
+    margin-left: 16px;
+    border-color: var(--border);
+}
+
+.cps-section-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--surface);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.cps-section-header:hover {
+    background: #2a2a2a;
+}
+
+.cps-section-toggle {
+    color: var(--primary);
+    margin-right: 12px;
+    font-size: 12px;
+    width: 16px;
+}
+
+.cps-section-content {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 12px;
+}
+
+.cps-section-content.collapsed {
+    display: none;
+}
+
+.cps-nested-section .cps-section-content {
+    grid-template-columns: 1fr;
+}
+
+.cps-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cps-field-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.cps-field-input {
+    display: flex;
+    align-items: center;
+}
+
+.cps-input {
+    width: 100%;
+}
+
+.cps-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--success);
+}
+
+/* ==========================================================================
+   Responsive Styles
+   ========================================================================== */
+
 @media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .card-actions {
+        width: 100%;
+    }
+
+    .card-actions button {
+        flex: 1;
+    }
+
+    .fm-table,
+    .hw-register-table {
+        font-size: 12px;
+    }
+
+    .fm-table th,
+    .fm-table td,
+    .hw-register-table th,
+    .hw-register-table td {
+        padding: 8px 12px;
+    }
+
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
     .hw-status-grid,
     .hw-controls-grid {
         grid-template-columns: 1fr;
     }
 
-    .hw-register-table {
-        font-size: 12px;
+    .cps-section-content {
+        grid-template-columns: 1fr;
     }
 
-    .hw-register-table th,
-    .hw-register-table td {
-        padding: 8px;
+    .cps-nested-section {
+        margin-left: 8px;
     }
 }

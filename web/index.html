@@ -19,9 +19,8 @@
             <div class="nav-tabs">
                 <button class="nav-tab active" data-tab="terminal">Terminal</button>
                 <button class="nav-tab" data-tab="files">Files</button>
-                <button class="nav-tab" data-tab="containers">Containers</button>
-                <button class="nav-tab" data-tab="images">Images</button>
                 <button class="nav-tab" data-tab="hardware">Hardware</button>
+                <button class="nav-tab" data-tab="cps">Settings</button>
             </div>
         </nav>
 
@@ -149,7 +148,7 @@
                     <button id="hw-read-all-regs-btn" class="btn btn-sm">Read All</button>
                 </div>
                 <div class="hw-register-table-container">
-                    <table class="hw-register-table">
+                    <table class="data-table hw-register-table">
                         <thead>
                             <tr>
                                 <th>Addr</th>
@@ -218,7 +217,7 @@
             </div>
             
             <div class="fm-table-container">
-                <table class="fm-table">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -239,14 +238,28 @@
             <div class="toolbar">
                 <h2>Terminal</h2>
                 <div class="toolbar-actions">
-                    <button id="new-host-shell" class="btn btn-primary" onclick="openHostShell()">Host Shell</button>
-                    <button id="new-container-shell" class="btn" onclick="openContainerShell()">Container Shell</button>
+                    <button id="new-host-shell" class="btn btn-primary" onclick="openHostShell()">Connect</button>
                     <button id="close-terminal" class="btn btn-danger" onclick="closeTerminal()">Close</button>
                 </div>
             </div>
             
             <div id="terminal-container" class="terminal-wrapper">
                 <div id="xterm-container"></div>
+            </div>
+        </div>
+
+        <!-- CPS Tab -->
+        <div id="cps-tab" class="tab-content hidden">
+            <div class="toolbar">
+                <h2>Settings</h2>
+                <div class="toolbar-actions">
+                    <button id="cps-load-btn" class="btn btn-primary">Load</button>
+                    <button id="cps-save-btn" class="btn btn-success">Save</button>
+                </div>
+            </div>
+            
+            <div id="cps-form-container" class="cps-container">
+                <div class="loading">Click "Load" to load settings...</div>
             </div>
         </div>
     </div>
@@ -353,5 +366,6 @@
     <script src="/filemanager.js"></script>
     <script src="/terminal.js"></script>
     <script src="/hardware.js"></script>
+    <script src="/cps.js"></script>
 </body>
 </html>

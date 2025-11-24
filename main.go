@@ -55,12 +55,13 @@ type Config struct {
 			ClockFreq uint32 `yaml:"clock_freq"`
 		} `yaml:"sx1255"`
 	} `yaml:"hardware"`
+	CPS struct {
+		SettingsPath string `yaml:"settings_path"`
+	} `yaml:"cps"`
 	Plugins []string `yaml:"plugins"`
 }
 
-var (
-	config Config
-)
+var config Config
 
 func main() {
 	// Setup structured logging
@@ -203,6 +204,10 @@ func initPlugins(app *fiber.App, dockerClient *client.Client) error {
 					"tx_rx_pin":  config.Hardware.SX1255.TxRxPin,
 					"clock_freq": config.Hardware.SX1255.ClockFreq,
 				},
+			}
+		case "cps":
+			pluginConfig = map[string]interface{}{
+				"settings_path": config.CPS.SettingsPath,
 			}
 		}
 

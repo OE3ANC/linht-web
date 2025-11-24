@@ -7,6 +7,37 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// toUint32 converts various numeric types to uint32
+// Handles int, int64, uint32, and float64 (from JSON unmarshaling)
+func toUint32(v interface{}) (uint32, bool) {
+	switch val := v.(type) {
+	case int:
+		return uint32(val), true
+	case int64:
+		return uint32(val), true
+	case uint32:
+		return val, true
+	case float64:
+		return uint32(val), true
+	default:
+		return 0, false
+	}
+}
+
+// toInt converts various numeric types to int
+func toInt(v interface{}) (int, bool) {
+	switch val := v.(type) {
+	case int:
+		return val, true
+	case int64:
+		return int(val), true
+	case float64:
+		return int(val), true
+	default:
+		return 0, false
+	}
+}
+
 // HardwarePlugin provides SX1255 transceiver control
 // Uses transient connections - initializes and releases for each operation
 type HardwarePlugin struct {
@@ -739,38 +770,27 @@ func init() {
 
 		var hwConfig HardwareConfig
 
-		// Parse SX1255 config with proper type handling
+		// Parse SX1255 config with helper functions for type conversion
 		if sx1255Cfg, ok := configMap["sx1255"].(map[string]interface{}); ok {
 			if spiDevice, ok := sx1255Cfg["spi_device"].(string); ok {
 				hwConfig.SX1255.SPIDevice = spiDevice
 			}
-			// Handle both int and uint32 for spi_speed
-			if spiSpeed, ok := sx1255Cfg["spi_speed"].(int); ok {
-				hwConfig.SX1255.SPISpeed = uint32(spiSpeed)
-			} else if spiSpeed, ok := sx1255Cfg["spi_speed"].(uint32); ok {
+			if spiSpeed, ok := toUint32(sx1255Cfg["spi_speed"]); ok {
 				hwConfig.SX1255.SPISpeed = spiSpeed
-			} else if spiSpeed, ok := sx1255Cfg["spi_speed"].(int64); ok {
-				hwConfig.SX1255.SPISpeed = uint32(spiSpeed)
 			}
 			if gpioChip, ok := sx1255Cfg["gpio_chip"].(string); ok {
 				hwConfig.SX1255.GPIOChip = gpioChip
 			}
-			if resetPin, ok := sx1255Cfg["reset_pin"].(int); ok {
+			if resetPin, ok := toInt(sx1255Cfg["reset_pin"]); ok {
 				hwConfig.SX1255.ResetPin = resetPin
 			}
-			if txRxPin, ok := sx1255Cfg["tx_rx_pin"].(int); ok {
+			if txRxPin, ok := toInt(sx1255Cfg["tx_rx_pin"]); ok {
 				hwConfig.SX1255.TxRxPin = txRxPin
 			} else {
-				// Default TX/RX pin if not specified
-				hwConfig.SX1255.TxRxPin = 13
+				hwConfig.SX1255.TxRxPin = 13 // Default TX/RX pin
 			}
-			// Handle both int and uint32 for clock_freq
-			if clockFreq, ok := sx1255Cfg["clock_freq"].(int); ok {
-				hwConfig.SX1255.ClockFreq = uint32(clockFreq)
-			} else if clockFreq, ok := sx1255Cfg["clock_freq"].(uint32); ok {
+			if clockFreq, ok := toUint32(sx1255Cfg["clock_freq"]); ok {
 				hwConfig.SX1255.ClockFreq = clockFreq
-			} else if clockFreq, ok := sx1255Cfg["clock_freq"].(int64); ok {
-				hwConfig.SX1255.ClockFreq = uint32(clockFreq)
 			}
 		}
 

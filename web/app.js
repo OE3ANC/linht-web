@@ -21,8 +21,6 @@ function hideLoading() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
-    
-    // Load initial data
     loadInitialData();
 });
 
@@ -72,7 +70,8 @@ function switchTab(tabName) {
     const dataLoaders = {
         images: loadImages,
         containers: loadContainers,
-        files: () => FileManager.init()
+        files: () => FileManager.init(),
+        cps: () => CPS.init()
     };
     
     const loader = dataLoaders[tabName];
@@ -105,48 +104,26 @@ async function api(url, options = {}) {
     return response;
 }
 
-// API response handler
-async function handleApiResponse(response, successMessage) {
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || `HTTP ${response.status} Error`;
-        throw new Error(errorMessage);
-    }
-    
-    const data = await response.json();
-    
-    if (!data.success) {
-        throw new Error(data.error || 'Operation failed');
-    }
-    
-    if (successMessage) {
-        showToast(successMessage, 'success');
-    }
-    
-    return data;
-}
-
 // Images
 async function loadImages() {
     const container = document.getElementById('images-list');
     container.innerHTML = '<div class="loading">Loading images...</div>';
     
-    showLoading('Fetching Docker images...');
-    try {
-        const response = await api('/api/images');
-        const data = await response.json();
-        
-        if (data.success && data.data.length > 0) {
-            container.innerHTML = data.data.map(image => renderImage(image)).join('');
-        } else {
-            container.innerHTML = '<div class="empty">No images found</div>';
+    await withLoading('Fetching Docker images...', async () => {
+        try {
+            const response = await api('/api/images');
+            const data = await response.json();
+            
+            if (data.success && data.data.length > 0) {
+                container.innerHTML = data.data.map(renderImage).join('');
+            } else {
+                container.innerHTML = '<div class="empty">No images found</div>';
+            }
+        } catch (error) {
+            container.innerHTML = '<div class="empty">Failed to load images</div>';
+            showToast('Failed to load images', 'error');
         }
-    } catch (error) {
-        container.innerHTML = '<div class="empty">Failed to load images</div>';
-        showToast('Failed to load images', 'error');
-    } finally {
-        hideLoading();
-    }
+    });
 }
 
 function renderImage(image) {
@@ -158,9 +135,7 @@ function renderImage(image) {
         <div class="card">
             <div class="card-info">
                 <div class="card-title">${tags}</div>
-                <div class="card-meta">
-                    Size: ${size} • Created: ${created}
-                </div>
+                <div class="card-meta">Size: ${size} • Created: ${created}</div>
             </div>
             <div class="card-actions">
                 <button class="btn" onclick="exportImage('${image.id}')">Export</button>
@@ -178,108 +153,67 @@ async function handleImageImport(e) {
     formData.append('file', file);
     
     showToast('Importing image...');
-    showLoading('Importing Docker image...');
-    
-    try {
-        const response = await api('/api/images/import', {
-            method: 'POST',
-            body: formData
-        });
-        
-        // Handle successful response
-        if (response.ok) {
-            const data = await response.json();
-            if (data.success) {
-                showToast('Image imported successfully', 'success');
-                loadImages();
-            } else {
-                showToast(data.error || 'Failed to import image', 'error');
-            }
-        } else {
-            // Handle error responses with detailed messages
-            let errorMessage = 'Failed to import image';
+    await withLoading('Importing Docker image...', async () => {
+        try {
+            const response = await api('/api/images/import', { method: 'POST', body: formData });
             
-            // Check for specific status codes
-            if (response.status === 413) {
-                errorMessage = 'Image file is too large. Maximum size is 10GB.';
-            } else if (response.status === 400) {
+            if (response.ok) {
                 const data = await response.json();
-                errorMessage = data.error || 'Invalid request';
-            } else if (response.status === 500) {
-                const data = await response.json();
-                errorMessage = data.error || 'Server error during import';
-            } else {
-                // Try to get error message from response
-                try {
-                    const data = await response.json();
-                    errorMessage = data.error || errorMessage;
-                } catch (e) {
-                    const text = await response.text();
-                    if (text) errorMessage = text;
+                if (data.success) {
+                    showToast('Image imported successfully', 'success');
+                    loadImages();
+                } else {
+                    showToast(data.error || 'Failed to import image', 'error');
                 }
+            } else {
+                let errorMessage = 'Failed to import image';
+                if (response.status === 413) errorMessage = 'Image file is too large. Maximum size is 10GB.';
+                else {
+                    try {
+                        const data = await response.json();
+                        errorMessage = data.error || errorMessage;
+                    } catch (e) { /* ignore */ }
+                }
+                showToast(errorMessage, 'error');
             }
-            
-            showToast(errorMessage, 'error');
+        } catch (error) {
+            showToast(`Failed to import image: ${error.message}`, 'error');
         }
-    } catch (error) {
-        showToast(`Failed to import image: ${error.message}`, 'error');
-    } finally {
-        hideLoading();
-    }
+    });
     
-    // Reset file input
     e.target.value = '';
 }
 
 async function exportImage(imageId) {
-    showLoading('Exporting Docker image...');
-    
-    try {
-        showToast('Exporting image...');
-        
-        const response = await api(`/api/images/${imageId}/export`);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Export failed: ${response.status} ${errorText}`);
+    await withLoading('Exporting Docker image...', async () => {
+        try {
+            showToast('Exporting image...');
+            const response = await api(`/api/images/${imageId}/export`);
+            
+            if (!response.ok) throw new Error(`Export failed: ${response.status}`);
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `image-${imageId.substring(0, 12)}.tar`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showToast(`Image exported successfully (${formatBytes(blob.size)})`, 'success');
+        } catch (error) {
+            showToast(`Failed to export image: ${error.message}`, 'error');
         }
-        
-        const blob = await response.blob();
-        
-        // Download file
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `image-${imageId.substring(0, 12)}.tar`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        showToast(`Image exported successfully (${formatBytes(blob.size)})`, 'success');
-    } catch (error) {
-        showToast(`Failed to export image: ${error.message}`, 'error');
-    } finally {
-        hideLoading();
-    }
+    });
 }
 
 async function deleteImage(imageId) {
     if (!confirm('Are you sure you want to delete this image?')) return;
     
-    showLoading('Deleting Docker image...');
-    try {
-        const response = await api(`/api/images/${imageId}`, {
-            method: 'DELETE'
-        });
-        
-        await handleApiResponse(response, 'Image deleted successfully');
-        loadImages();
-    } catch (error) {
-        showToast(`Failed to delete image: ${error.message}`, 'error');
-    } finally {
-        hideLoading();
-    }
+    await apiCall('Deleting Docker image...', `/api/images/${imageId}`, { method: 'DELETE' },
+        'Image deleted successfully', loadImages);
 }
 
 // Containers
@@ -287,69 +221,53 @@ async function loadContainers() {
     const container = document.getElementById('containers-list');
     container.innerHTML = '<div class="loading">Loading containers...</div>';
     
-    showLoading('Fetching Docker containers...');
-    try {
-        const response = await api('/api/containers');
-        const data = await response.json();
-        
-        if (data.success && data.data.length > 0) {
-            container.innerHTML = data.data.map(cont => renderContainer(cont)).join('');
-        } else {
-            container.innerHTML = '<div class="empty">No containers found</div>';
+    await withLoading('Fetching Docker containers...', async () => {
+        try {
+            const response = await api('/api/containers');
+            const data = await response.json();
+            
+            if (data.success && data.data.length > 0) {
+                container.innerHTML = data.data.map(renderContainer).join('');
+            } else {
+                container.innerHTML = '<div class="empty">No containers found</div>';
+            }
+        } catch (error) {
+            container.innerHTML = '<div class="empty">Failed to load containers</div>';
+            showToast('Failed to load containers', 'error');
         }
-    } catch (error) {
-        container.innerHTML = '<div class="empty">Failed to load containers</div>';
-        showToast('Failed to load containers', 'error');
-    } finally {
-        hideLoading();
-    }
+    });
 }
 
 function renderContainer(container) {
     const name = Array.isArray(container.names) && container.names.length > 0
-        ? container.names[0].replace(/^\//, '')
-        : 'unnamed';
+        ? container.names[0].replace(/^\//, '') : 'unnamed';
     const state = container.state.toLowerCase();
     const created = new Date(container.created).toLocaleString();
     
     const actions = state === 'running'
-        ? `
-            <button class="btn" onclick="viewLogs('${container.id}')">Logs</button>
-            <button class="btn btn-danger" onclick="stopContainer('${container.id}')">Stop</button>
-        `
-        : `
-            <button class="btn btn-success" onclick="startContainer('${container.id}')">Start</button>
-            <button class="btn btn-danger" onclick="deleteContainer('${container.id}')">Delete</button>
-        `;
+        ? `<button class="btn" onclick="viewLogs('${container.id}')">Logs</button>
+           <button class="btn btn-danger" onclick="stopContainer('${container.id}')">Stop</button>`
+        : `<button class="btn btn-success" onclick="startContainer('${container.id}')">Start</button>
+           <button class="btn btn-danger" onclick="deleteContainer('${container.id}')">Delete</button>`;
     
     return `
         <div class="card">
             <div class="card-info">
-                <div class="card-title">
-                    ${name}
-                    <span class="status status-${state}">${state}</span>
-                </div>
-                <div class="card-meta">
-                    Image: ${container.image} • ${container.status} • Created: ${created}
-                </div>
+                <div class="card-title">${name} <span class="status status-${state}">${state}</span></div>
+                <div class="card-meta">Image: ${container.image} • ${container.status} • Created: ${created}</div>
             </div>
-            <div class="card-actions">
-                ${actions}
-            </div>
+            <div class="card-actions">${actions}</div>
         </div>
     `;
 }
 
 async function openCreateModal() {
-    const modal = document.getElementById('create-container-modal');
-    modal.classList.remove('hidden');
-    populateImageDropdown();
+    document.getElementById('create-container-modal').classList.remove('hidden');
+    await populateImageDropdown();
 }
 
 async function populateImageDropdown() {
     const select = document.getElementById('container-image');
-    
-    // Clear existing options except the first one
     select.innerHTML = '<option value="">Select an image...</option>';
     
     try {
@@ -359,21 +277,13 @@ async function populateImageDropdown() {
         if (data.success && data.data.length > 0) {
             data.data.forEach(image => {
                 const tags = Array.isArray(image.tags) ? image.tags : [image.tags];
-                tags.forEach(tag => {
-                    if (tag !== '<none>') {
-                        const option = document.createElement('option');
-                        option.value = tag;
-                        option.textContent = tag;
-                        select.appendChild(option);
-                    }
+                tags.filter(tag => tag !== '<none>').forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag;
+                    option.textContent = tag;
+                    select.appendChild(option);
                 });
             });
-        } else {
-            const option = document.createElement('option');
-            option.value = '';
-            option.textContent = 'No images available';
-            option.disabled = true;
-            select.appendChild(option);
         }
     } catch (error) {
         showToast('Failed to load images', 'error');
@@ -381,8 +291,7 @@ async function populateImageDropdown() {
 }
 
 function closeCreateModal() {
-    const modal = document.getElementById('create-container-modal');
-    modal.classList.add('hidden');
+    document.getElementById('create-container-modal').classList.add('hidden');
     document.getElementById('create-container-form').reset();
 }
 
@@ -397,78 +306,31 @@ async function handleCreateContainer(e) {
     const env = envText.trim() ? envText.split('\n').filter(line => line.trim()) : [];
     const cmd = cmdText.trim() ? cmdText.split(' ').filter(part => part.trim()) : [];
     
-    showLoading('Creating Docker container...');
-    try {
-        const response = await api('/api/containers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image, name, env, cmd })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showToast('Container created successfully', 'success');
-            closeCreateModal();
-            loadContainers();
-        } else {
-            showToast(data.error || 'Failed to create container', 'error');
-        }
-    } catch (error) {
-        showToast('Failed to create container', 'error');
-    } finally {
-        hideLoading();
-    }
+    await apiCall('Creating Docker container...', '/api/containers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image, name, env, cmd })
+    }, 'Container created successfully', () => {
+        closeCreateModal();
+        loadContainers();
+    });
 }
 
 async function startContainer(containerId) {
-    showLoading('Starting Docker container...');
-    try {
-        const response = await api(`/api/containers/${containerId}/start`, {
-            method: 'POST'
-        });
-        
-        await handleApiResponse(response, 'Container started');
-        loadContainers();
-    } catch (error) {
-        showToast(`Failed to start container: ${error.message}`, 'error');
-    } finally {
-        hideLoading();
-    }
+    await apiCall('Starting Docker container...', `/api/containers/${containerId}/start`,
+        { method: 'POST' }, 'Container started', loadContainers);
 }
 
 async function stopContainer(containerId) {
-    showLoading('Stopping Docker container...');
-    try {
-        const response = await api(`/api/containers/${containerId}/stop`, {
-            method: 'POST'
-        });
-        
-        await handleApiResponse(response, 'Container stopped');
-        loadContainers();
-    } catch (error) {
-        showToast(`Failed to stop container: ${error.message}`, 'error');
-    } finally {
-        hideLoading();
-    }
+    await apiCall('Stopping Docker container...', `/api/containers/${containerId}/stop`,
+        { method: 'POST' }, 'Container stopped', loadContainers);
 }
 
 async function deleteContainer(containerId) {
     if (!confirm('Are you sure you want to delete this container?')) return;
     
-    showLoading('Deleting Docker container...');
-    try {
-        const response = await api(`/api/containers/${containerId}`, {
-            method: 'DELETE'
-        });
-        
-        await handleApiResponse(response, 'Container deleted');
-        loadContainers();
-    } catch (error) {
-        showToast(`Failed to delete container: ${error.message}`, 'error');
-    } finally {
-        hideLoading();
-    }
+    await apiCall('Deleting Docker container...', `/api/containers/${containerId}`,
+        { method: 'DELETE' }, 'Container deleted', loadContainers);
 }
 
 // Logs
@@ -481,14 +343,9 @@ function viewLogs(containerId) {
     const content = document.getElementById('logs-content');
     content.innerHTML = '';
     
-    // Close previous connection
-    if (logsEventSource) {
-        logsEventSource.close();
-    }
+    if (logsEventSource) logsEventSource.close();
     
-    // Create EventSource connection
-    const url = `/api/containers/${containerId}/logs`;
-    logsEventSource = new EventSource(url);
+    logsEventSource = new EventSource(`/api/containers/${containerId}/logs`);
     
     logsEventSource.onmessage = (event) => {
         const line = document.createElement('div');
@@ -507,7 +364,6 @@ function viewLogs(containerId) {
         logsEventSource = null;
     };
     
-    // Setup close handler
     modal.querySelector('.modal-close').onclick = () => {
         if (logsEventSource) {
             logsEventSource.close();
@@ -541,7 +397,6 @@ function showDetailedError(errorMessage, url) {
     `;
     toast.className = 'toast error';
     
-    // Keep error visible longer
     setTimeout(() => {
         toast.classList.add('hidden');
     }, ERROR_TOAST_DURATION);

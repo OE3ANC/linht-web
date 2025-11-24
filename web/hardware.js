@@ -35,25 +35,11 @@ function initHardwareTab() {
 
 // Initialize hardware
 async function initializeHardware() {
-    try {
-        showLoading('Initializing hardware...');
-        const response = await fetch('/api/hardware/init', {
-            method: 'POST'
-        });
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
+    await apiCall('Initializing hardware...', '/api/hardware/init', { method: 'POST' },
+        'Hardware initialized successfully!', async () => {
             hardwareInitialized = true;
-            showToast('Hardware initialized successfully!', 'success');
             await refreshHardwareStatus();
-        } else {
-            showToast('Failed to initialize hardware: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error initializing hardware: ' + error.message, 'error');
-    }
+        });
 }
 
 // Reset hardware
@@ -62,48 +48,17 @@ async function resetHardware() {
         showToast('Hardware not initialized', 'error');
         return;
     }
-
-    try {
-        showLoading('Resetting hardware...');
-        const response = await fetch('/api/hardware/reset', {
-            method: 'POST'
-        });
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
-            showToast('Hardware reset successful!', 'success');
-            await refreshHardwareStatus();
-        } else {
-            showToast('Failed to reset hardware: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error resetting hardware: ' + error.message, 'error');
-    }
+    await apiCall('Resetting hardware...', '/api/hardware/reset', { method: 'POST' },
+        'Hardware reset successful!', refreshHardwareStatus);
 }
 
 // Close hardware
 async function closeHardware() {
-    try {
-        showLoading('Closing hardware...');
-        const response = await fetch('/api/hardware/close', {
-            method: 'POST'
-        });
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
+    await apiCall('Closing hardware...', '/api/hardware/close', { method: 'POST' },
+        'Hardware closed', () => {
             hardwareInitialized = false;
-            showToast('Hardware closed', 'success');
             clearHardwareStatus();
-        } else {
-            showToast('Failed to close hardware: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error closing hardware: ' + error.message, 'error');
-    }
+        });
 }
 
 // Refresh hardware status
@@ -213,202 +168,95 @@ function clearHardwareStatus() {
     document.getElementById('hw-mode').textContent = '--';
 }
 
-// Set operating mode
-async function setMode() {
+// Helper to check hardware initialization
+function requireHardware() {
     if (!hardwareInitialized) {
         showToast('Hardware not initialized', 'error');
-        return;
+        return false;
     }
+    return true;
+}
 
+// Set operating mode
+async function setMode() {
+    if (!requireHardware()) return;
     const mode = document.getElementById('hw-mode-select').value;
-    
-    try {
-        showLoading('Setting mode...');
-        const response = await fetch('/api/hardware/mode', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({mode: mode})
-        });
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
-            showToast('Mode set to ' + mode.toUpperCase(), 'success');
-            await refreshHardwareStatus();
-        } else {
-            showToast('Failed to set mode: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error setting mode: ' + error.message, 'error');
-    }
+    await apiCall('Setting mode...', '/api/hardware/mode', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({mode: mode})
+    }, 'Mode set to ' + mode.toUpperCase(), refreshHardwareStatus);
 }
 
 // Set RX frequency
 async function setRxFrequency() {
-    if (!hardwareInitialized) {
-        showToast('Hardware not initialized', 'error');
-        return;
-    }
-
+    if (!requireHardware()) return;
     const freqMHz = parseFloat(document.getElementById('hw-rx-freq-input').value);
     if (isNaN(freqMHz) || freqMHz < 400 || freqMHz > 510) {
         showToast('Invalid frequency. Must be between 400-510 MHz', 'error');
         return;
     }
-
     const freqHz = Math.round(freqMHz * 1000000);
-    
-    try {
-        showLoading('Setting RX frequency...');
-        const response = await fetch('/api/hardware/frequency/rx', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({frequency: freqHz})
-        });
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
-            showToast('RX frequency set to ' + freqMHz.toFixed(3) + ' MHz', 'success');
-            await refreshHardwareStatus();
-        } else {
-            showToast('Failed to set RX frequency: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error setting RX frequency: ' + error.message, 'error');
-    }
+    await apiCall('Setting RX frequency...', '/api/hardware/frequency/rx', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({frequency: freqHz})
+    }, 'RX frequency set to ' + freqMHz.toFixed(3) + ' MHz', refreshHardwareStatus);
 }
 
 // Set TX frequency
 async function setTxFrequency() {
-    if (!hardwareInitialized) {
-        showToast('Hardware not initialized', 'error');
-        return;
-    }
-
+    if (!requireHardware()) return;
     const freqMHz = parseFloat(document.getElementById('hw-tx-freq-input').value);
     if (isNaN(freqMHz) || freqMHz < 400 || freqMHz > 510) {
         showToast('Invalid frequency. Must be between 400-510 MHz', 'error');
         return;
     }
-
     const freqHz = Math.round(freqMHz * 1000000);
-    
-    try {
-        showLoading('Setting TX frequency...');
-        const response = await fetch('/api/hardware/frequency/tx', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({frequency: freqHz})
-        });
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
-            showToast('TX frequency set to ' + freqMHz.toFixed(3) + ' MHz', 'success');
-            await refreshHardwareStatus();
-        } else {
-            showToast('Failed to set TX frequency: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error setting TX frequency: ' + error.message, 'error');
-    }
+    await apiCall('Setting TX frequency...', '/api/hardware/frequency/tx', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({frequency: freqHz})
+    }, 'TX frequency set to ' + freqMHz.toFixed(3) + ' MHz', refreshHardwareStatus);
 }
 
 // Set LNA gain
 async function setLNAGain() {
-    if (!hardwareInitialized) {
-        showToast('Hardware not initialized', 'error');
-        return;
-    }
-
+    if (!requireHardware()) return;
     const gain = parseInt(document.getElementById('hw-lna-gain-input').value);
     if (isNaN(gain) || gain < 0 || gain > 48) {
         showToast('Invalid LNA gain. Must be between 0-48 dB', 'error');
         return;
     }
-    
-    try {
-        showLoading('Setting LNA gain...');
-        const response = await fetch('/api/hardware/gain/lna', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({gain: gain})
-        });
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
-            showToast('LNA gain set to ' + gain + ' dB', 'success');
-        } else {
-            showToast('Failed to set LNA gain: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error setting LNA gain: ' + error.message, 'error');
-    }
+    await apiCall('Setting LNA gain...', '/api/hardware/gain/lna', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({gain: gain})
+    }, 'LNA gain set to ' + gain + ' dB');
 }
 
 // Set PGA gain
 async function setPGAGain() {
-    if (!hardwareInitialized) {
-        showToast('Hardware not initialized', 'error');
-        return;
-    }
-
+    if (!requireHardware()) return;
     const gain = parseInt(document.getElementById('hw-pga-gain-input').value);
     if (isNaN(gain) || gain < 0 || gain > 30) {
         showToast('Invalid PGA gain. Must be between 0-30 dB', 'error');
         return;
     }
-    
-    try {
-        showLoading('Setting PGA gain...');
-        const response = await fetch('/api/hardware/gain/pga', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({gain: gain})
-        });
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
-            showToast('PGA gain set to ' + gain + ' dB', 'success');
-        } else {
-            showToast('Failed to set PGA gain: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error setting PGA gain: ' + error.message, 'error');
-    }
+    await apiCall('Setting PGA gain...', '/api/hardware/gain/pga', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({gain: gain})
+    }, 'PGA gain set to ' + gain + ' dB');
 }
 
 // Read all registers
 async function readAllRegisters() {
-    if (!hardwareInitialized) {
-        showToast('Hardware not initialized', 'error');
-        return;
-    }
-
-    try {
-        showLoading('Reading registers...');
-        const response = await fetch('/api/hardware/registers');
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
-            displayRegisters(data.data.registers);
-            showToast('Read ' + data.data.count + ' registers', 'success');
-        } else {
-            showToast('Failed to read registers: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error reading registers: ' + error.message, 'error');
-    }
+    if (!requireHardware()) return;
+    await apiCall('Reading registers...', '/api/hardware/registers', {}, null, (data) => {
+        displayRegisters(data.data.registers);
+        showToast('Read ' + data.data.count + ' registers', 'success');
+    });
 }
 
 // Display registers in table
@@ -529,11 +377,7 @@ function syncBinaryToHex(addrNum) {
 
 // Write register from input fields
 async function writeRegisterFromInput(addrNum) {
-    if (!hardwareInitialized) {
-        showToast('Hardware not initialized', 'error');
-        return;
-    }
-
+    if (!requireHardware()) return;
     const hexInput = document.getElementById(`reg-hex-${addrNum}`);
     if (!hexInput) return;
 
@@ -544,58 +388,23 @@ async function writeRegisterFromInput(addrNum) {
     }
 
     const value = parseInt(hexValue, 16);
-    
-    try {
-        showLoading('Writing register...');
-        const response = await fetch(`/api/hardware/register/${addrNum}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({value: value})
-        });
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
-            showToast('Register 0x' + addrNum.toString(16).toUpperCase().padStart(2, '0') + ' written', 'success');
-            await readRegister(addrNum);
-        } else {
-            showToast('Failed to write register: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error writing register: ' + error.message, 'error');
-    }
+    const addrHex = '0x' + addrNum.toString(16).toUpperCase().padStart(2, '0');
+    await apiCall('Writing register...', `/api/hardware/register/${addrNum}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({value: value})
+    }, 'Register ' + addrHex + ' written', () => readRegister(addrNum));
 }
 
 // Set TX/RX switch
 async function setTxRxSwitch(tx) {
-    if (!hardwareInitialized) {
-        showToast('Hardware not initialized', 'error');
-        return;
-    }
-
+    if (!requireHardware()) return;
     const mode = tx ? 'TX' : 'RX';
-    
-    try {
-        showLoading('Setting TX/RX switch...');
-        const response = await fetch('/api/hardware/txrx-switch', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({tx: tx})
-        });
-        const data = await response.json();
-        hideLoading();
-
-        if (data.success) {
-            showToast('TX/RX switch set to ' + mode, 'success');
-            updateTxRxStatus(tx);
-        } else {
-            showToast('Failed to set TX/RX switch: ' + data.message, 'error');
-        }
-    } catch (error) {
-        hideLoading();
-        showToast('Error setting TX/RX switch: ' + error.message, 'error');
-    }
+    await apiCall('Setting TX/RX switch...', '/api/hardware/txrx-switch', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({tx: tx})
+    }, 'TX/RX switch set to ' + mode, () => updateTxRxStatus(tx));
 }
 
 // Update TX/RX switch status display
