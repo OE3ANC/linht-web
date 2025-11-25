@@ -71,7 +71,8 @@ function switchTab(tabName) {
         images: loadImages,
         containers: loadContainers,
         files: () => FileManager.init(),
-        cps: () => CPS.init()
+        cps: () => CPS.init(),
+        services: () => Services.init()
     };
     
     const loader = dataLoaders[tabName];

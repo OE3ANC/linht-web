@@ -33,7 +33,9 @@ type Config struct {
 		Host string `yaml:"host"`
 	} `yaml:"server"`
 	Docker struct {
-		Socket string `yaml:"socket"`
+		Socket               string `yaml:"socket"`
+		ContainerStopTimeout int    `yaml:"container_stop_timeout"`
+		DefaultLogLines      string `yaml:"default_log_lines"`
 	} `yaml:"docker"`
 	WebShell struct {
 		Shell    string `yaml:"shell"`
@@ -58,6 +60,10 @@ type Config struct {
 	CPS struct {
 		SettingsPath string `yaml:"settings_path"`
 	} `yaml:"cps"`
+	Services struct {
+		Prefix          string `yaml:"prefix"`
+		DefaultLogLines string `yaml:"default_log_lines"`
+	} `yaml:"services"`
 	Plugins []string `yaml:"plugins"`
 }
 
@@ -184,7 +190,11 @@ func initPlugins(app *fiber.App, dockerClient *client.Client) error {
 		var pluginConfig interface{}
 		switch name {
 		case "docker":
-			pluginConfig = dockerClient
+			pluginConfig = map[string]interface{}{
+				"client":                 dockerClient,
+				"container_stop_timeout": config.Docker.ContainerStopTimeout,
+				"default_log_lines":      config.Docker.DefaultLogLines,
+			}
 		case "webshell":
 			pluginConfig = map[string]interface{}{
 				"client": dockerClient,
@@ -208,6 +218,11 @@ func initPlugins(app *fiber.App, dockerClient *client.Client) error {
 		case "cps":
 			pluginConfig = map[string]interface{}{
 				"settings_path": config.CPS.SettingsPath,
+			}
+		case "services":
+			pluginConfig = map[string]interface{}{
+				"prefix":            config.Services.Prefix,
+				"default_log_lines": config.Services.DefaultLogLines,
 			}
 		}
 

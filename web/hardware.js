@@ -279,13 +279,13 @@ function displayRegisters(registers) {
                 <div class="hw-register-name">${reg.description.split(' - ')[1] || ''}</div>
             </td>
             <td>
-                <input type="text" id="reg-hex-${addrNum}" class="hw-input hw-reg-input"
+                <input type="text" id="reg-hex-${addrNum}" class="hw-reg-input"
                        value="${reg.value_dec.toString(16).toUpperCase().padStart(2, '0')}"
                        maxlength="2"
                        oninput="syncHexToBinary(${addrNum})" />
             </td>
             <td>
-                <input type="text" id="reg-bin-${addrNum}" class="hw-input hw-reg-input-bin"
+                <input type="text" id="reg-bin-${addrNum}" class="hw-reg-input-bin"
                        value="${binaryFormatted}"
                        maxlength="9"
                        oninput="syncBinaryToHex(${addrNum})" />

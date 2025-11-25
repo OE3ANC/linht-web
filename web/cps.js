@@ -157,20 +157,17 @@ const CPS = {
             input.type = 'number';
             input.value = value;
             input.step = Number.isInteger(value) ? '1' : '0.001';
-            input.className = 'cps-input';
         } else if (value === null) {
             // Text input for null values
             input = document.createElement('input');
             input.type = 'text';
             input.value = '';
             input.placeholder = 'null';
-            input.className = 'cps-input';
         } else {
             // Text input for strings
             input = document.createElement('input');
             input.type = 'text';
             input.value = value;
-            input.className = 'cps-input';
         }
 
         input.dataset.path = path;

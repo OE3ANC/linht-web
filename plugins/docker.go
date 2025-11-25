@@ -16,21 +16,28 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Docker operation constants
-const (
-	ContainerStopTimeout = 10    // seconds
-	DefaultLogLines      = "100" // default number of log lines
-)
-
 type DockerPlugin struct {
-	client *client.Client
+	client               *client.Client
+	containerStopTimeout int
+	defaultLogLines      string
 }
 
-func NewDockerPlugin(cli *client.Client) (*DockerPlugin, error) {
+func NewDockerPlugin(cli *client.Client, containerStopTimeout int, defaultLogLines string) (*DockerPlugin, error) {
 	if cli == nil {
 		return nil, fmt.Errorf("docker client cannot be nil")
 	}
-	return &DockerPlugin{client: cli}, nil
+	// Set defaults if not provided
+	if containerStopTimeout <= 0 {
+		containerStopTimeout = 10
+	}
+	if defaultLogLines == "" {
+		defaultLogLines = "100"
+	}
+	return &DockerPlugin{
+		client:               cli,
+		containerStopTimeout: containerStopTimeout,
+		defaultLogLines:      defaultLogLines,
+	}, nil
 }
 
 // Shutdown implements the Plugin interface
@@ -293,7 +300,7 @@ func (p *DockerPlugin) stopContainer(c *fiber.Ctx) error {
 	containerID := c.Params("id")
 	ctx := context.Background()
 
-	timeout := ContainerStopTimeout
+	timeout := p.containerStopTimeout
 	if err := p.client.ContainerStop(ctx, containerID, container.StopOptions{Timeout: &timeout}); err != nil {
 		return SendError(c, 500, err)
 	}
@@ -327,7 +334,7 @@ func (p *DockerPlugin) streamLogs(c *fiber.Ctx) error {
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
-		Tail:       DefaultLogLines,
+		Tail:       p.defaultLogLines,
 	})
 	if err != nil {
 		return c.Status(500).JSON(APIResponse{
@@ -368,10 +375,26 @@ func hasValidImageExtension(filename string) bool {
 // Register the plugin
 func init() {
 	Register("docker", func(config interface{}) (Plugin, error) {
-		cli, ok := config.(*client.Client)
+		cfg, ok := config.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("invalid config for docker plugin: expected *client.Client")
+			return nil, fmt.Errorf("invalid config for docker plugin: expected map[string]interface{}")
 		}
-		return NewDockerPlugin(cli)
+
+		cli, ok := cfg["client"].(*client.Client)
+		if !ok {
+			return nil, fmt.Errorf("invalid config for docker plugin: missing or invalid client")
+		}
+
+		containerStopTimeout := 10
+		if timeout, ok := cfg["container_stop_timeout"].(int); ok {
+			containerStopTimeout = timeout
+		}
+
+		defaultLogLines := "100"
+		if lines, ok := cfg["default_log_lines"].(string); ok && lines != "" {
+			defaultLogLines = lines
+		}
+
+		return NewDockerPlugin(cli, containerStopTimeout, defaultLogLines)
 	})
 }

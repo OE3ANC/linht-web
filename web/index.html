@@ -19,6 +19,7 @@
             <div class="nav-tabs">
                 <button class="nav-tab active" data-tab="terminal">Terminal</button>
                 <button class="nav-tab" data-tab="files">Files</button>
+                <button class="nav-tab" data-tab="services">Services</button>
                 <button class="nav-tab" data-tab="hardware">Hardware</button>
                 <button class="nav-tab" data-tab="cps">Settings</button>
             </div>
@@ -82,7 +83,7 @@
                     <div class="hw-control-group">
                         <label class="hw-label">Operating Mode:</label>
                         <div class="hw-control-row">
-                            <select id="hw-mode-select" class="hw-input">
+                            <select id="hw-mode-select">
                                 <option value="sleep">Sleep</option>
                                 <option value="standby">Standby</option>
                                 <option value="rx">RX</option>
@@ -97,7 +98,7 @@
                     <div class="hw-control-group">
                         <label class="hw-label">RX Frequency (MHz):</label>
                         <div class="hw-control-row">
-                            <input type="number" id="hw-rx-freq-input" class="hw-input"
+                            <input type="number" id="hw-rx-freq-input"
                                    value="433.475" step="0.001" min="400" max="510">
                             <button id="hw-set-rx-freq-btn" class="btn btn-sm">Set</button>
                         </div>
@@ -106,7 +107,7 @@
                     <div class="hw-control-group">
                         <label class="hw-label">TX Frequency (MHz):</label>
                         <div class="hw-control-row">
-                            <input type="number" id="hw-tx-freq-input" class="hw-input"
+                            <input type="number" id="hw-tx-freq-input"
                                    value="438.000" step="0.001" min="400" max="510">
                             <button id="hw-set-tx-freq-btn" class="btn btn-sm">Set</button>
                         </div>
@@ -115,7 +116,7 @@
                     <div class="hw-control-group">
                         <label class="hw-label">LNA Gain (dB):</label>
                         <div class="hw-control-row">
-                            <input type="number" id="hw-lna-gain-input" class="hw-input"
+                            <input type="number" id="hw-lna-gain-input"
                                    value="48" min="0" max="48" step="6">
                             <button id="hw-set-lna-gain-btn" class="btn btn-sm">Set</button>
                         </div>
@@ -124,7 +125,7 @@
                     <div class="hw-control-group">
                         <label class="hw-label">PGA Gain (dB):</label>
                         <div class="hw-control-row">
-                            <input type="number" id="hw-pga-gain-input" class="hw-input"
+                            <input type="number" id="hw-pga-gain-input"
                                    value="30" min="0" max="30" step="2">
                             <button id="hw-set-pga-gain-btn" class="btn btn-sm">Set</button>
                         </div>
@@ -248,6 +249,33 @@
             </div>
         </div>
 
+        <!-- Services Tab -->
+        <div id="services-tab" class="tab-content hidden">
+            <div class="toolbar">
+                <h2>LinHT Services</h2>
+                <div class="toolbar-actions">
+                    <button id="services-refresh-btn" class="btn">⟳ Refresh</button>
+                </div>
+            </div>
+            
+            <div class="services-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Enabled</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="services-list">
+                        <tr><td colspan="5" class="empty">Click ⟳ Refresh to load services</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- CPS Tab -->
         <div id="cps-tab" class="tab-content hidden">
             <div class="toolbar">
@@ -340,6 +368,17 @@
         </div>
     </div>
 
+    <!-- Services Logs Modal -->
+    <div id="services-logs-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="services-logs-title">Service Logs</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="logs-container" id="services-logs-content"></div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast hidden"></div>
 
@@ -367,5 +406,6 @@
     <script src="/terminal.js"></script>
     <script src="/hardware.js"></script>
     <script src="/cps.js"></script>
+    <script src="/services.js"></script>
 </body>
 </html>

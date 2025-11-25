@@ -129,9 +129,7 @@ input[type="password"],
 input[type="text"],
 input[type="number"],
 textarea,
-select,
-.hw-input,
-.cps-input {
+select {
     padding: 8px 12px;
     border: 1px solid var(--primary);
     border-radius: 0;
@@ -140,13 +138,12 @@ select,
     background: #000;
     color: var(--text);
     transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
 }
 
 input:focus,
 textarea:focus,
-select:focus,
-.hw-input:focus,
-.cps-input:focus {
+select:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 10px rgba(176, 176, 176, 0.3);
@@ -322,8 +319,9 @@ button:hover,
 }
 
 .toolbar h2 {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 600;
+    color: var(--primary);
 }
 
 .toolbar-actions {
@@ -427,11 +425,12 @@ button:hover,
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.85);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    padding: 20px;
 }
 
 .modal.hidden {
@@ -442,42 +441,53 @@ button:hover,
     background: var(--surface);
     border-radius: 0;
     border: 2px solid var(--primary);
-    width: 90%;
+    width: 100%;
     max-width: 500px;
     max-height: 90vh;
     overflow: auto;
+    display: flex;
+    flex-direction: column;
 }
 
+/* Large modal - for logs, takes most of the screen */
 .modal-large {
-    max-width: 800px;
+    max-width: none;
+    width: calc(100vw - 40px);
+    height: calc(100vh - 40px);
+    max-height: none;
 }
 
 .modal-header {
-    padding: 20px;
-    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    border-bottom: 2px solid var(--primary);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: var(--bg);
+    flex-shrink: 0;
 }
 
 .modal-header h3 {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
+    color: var(--success);
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
 }
 
 .modal-close {
     background: none;
-    border: none;
-    font-size: 24px;
-    color: var(--text-secondary);
+    border: 1px solid var(--danger);
+    font-size: 16px;
+    color: var(--danger);
     cursor: pointer;
-    padding: 0;
-    width: 32px;
-    height: 32px;
+    padding: 4px 12px;
+    transition: all 0.2s;
 }
 
 .modal-close:hover {
-    color: var(--text);
+    background: var(--danger);
+    color: #000;
+    box-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
 }
 
 .modal-content form {
@@ -512,14 +522,42 @@ button:hover,
     font-family: var(--font-mono);
     font-size: 13px;
     padding: 16px;
-    height: 500px;
+    flex: 1;
     overflow-y: auto;
-    border-top: 2px solid var(--primary);
+    overflow-x: hidden;
+    min-height: 0;
+}
+
+/* Custom scrollbar for logs */
+.logs-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.logs-container::-webkit-scrollbar-track {
+    background: #000;
+}
+
+.logs-container::-webkit-scrollbar-thumb {
+    background: var(--primary);
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
 }
 
 .log-line {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     word-break: break-all;
+    line-height: 1.4;
+    padding: 1px 0;
+}
+
+.log-line:hover {
+    background: rgba(176, 176, 176, 0.1);
+}
+
+.log-error {
+    color: var(--danger);
 }
 
 /* ==========================================================================
@@ -607,8 +645,8 @@ button:hover,
 }
 
 .loading-text {
-    font-size: 16px;
-    color: var(--primary);
+    font-size: 18px;
+    color: var(--logo-green);
     margin-bottom: 20px;
     letter-spacing: 2px;
     animation: pulse 2s ease-in-out infinite;
@@ -617,11 +655,11 @@ button:hover,
 @keyframes pulse {
     0%, 100% {
         opacity: 1;
-        text-shadow: 0 0 5px rgba(176, 176, 176, 0.8);
+        text-shadow: 0 0 5px rgba(51, 255, 51, 0.8);
     }
     50% {
         opacity: 0.7;
-        text-shadow: 0 0 15px rgba(176, 176, 176, 1);
+        text-shadow: 0 0 15px rgba(51, 255, 51, 1);
     }
 }
 
@@ -824,10 +862,12 @@ button:hover,
     text-shadow: none;
 }
 
-.fm-table-container {
+.fm-table-container,
+.services-table-container {
     background: var(--surface);
     border: 2px solid var(--primary);
     overflow-x: auto;
+    flex: 1;
 }
 
 .fm-folder-name,
@@ -865,7 +905,7 @@ button:hover,
 /* Unified section title style */
 .hw-section-title,
 .cps-section-title {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--success);
     margin-bottom: 16px;
@@ -873,9 +913,7 @@ button:hover,
 }
 
 .cps-section-title {
-    font-size: 14px;
     margin: 0;
-    text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
 }
 
 .hw-status-grid {
@@ -937,8 +975,10 @@ button:hover,
     gap: 8px;
 }
 
-.hw-input {
+.hw-control-row input,
+.hw-control-row select {
     flex: 1;
+    width: auto;
 }
 
 .hw-register-controls {
@@ -1067,10 +1107,6 @@ button:hover,
     align-items: center;
 }
 
-.cps-input {
-    width: 100%;
-}
-
 .cps-checkbox {
     width: 20px;
     height: 20px;
@@ -1103,15 +1139,12 @@ button:hover,
         flex: 1;
     }
 
-    .fm-table,
-    .hw-register-table {
+    .data-table {
         font-size: 12px;
     }
 
-    .fm-table th,
-    .fm-table td,
-    .hw-register-table th,
-    .hw-register-table td {
+    .data-table th,
+    .data-table td {
         padding: 8px 12px;
     }
 
