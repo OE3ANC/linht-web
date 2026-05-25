@@ -54,6 +54,12 @@ type HardwareConfig struct {
 		TxRxPin   int    `yaml:"tx_rx_pin"`
 		ClockFreq uint32 `yaml:"clock_freq"`
 	} `yaml:"sx1255"`
+	Attenuator struct {
+		DataPin int
+		ClkPin  int
+		LE1Pin  int
+		LE2Pin  int
+	}
 }
 
 // NewHardwarePlugin creates a new hardware plugin instance
@@ -123,6 +129,14 @@ func (p *HardwarePlugin) RegisterRoutes(app *fiber.App) {
 	// TX/RX switch control
 	api.Post("/txrx-switch", p.handleSetTxRxSwitch)
 	api.Get("/txrx-switch", p.handleGetTxRxSwitch)
+
+	// Attenuator control (PE4312)
+	api.Post("/attenuator/1", p.handleSetAttenuator1)
+	api.Post("/attenuator/2", p.handleSetAttenuator2)
+	api.Post("/attenuator/both", p.handleSetAttenuatorBoth)
+	api.Get("/attenuator/1", p.handleGetAttenuator1)
+	api.Get("/attenuator/2", p.handleGetAttenuator2)
+	api.Get("/attenuator/info", p.handleAttenuatorInfo)
 
 	slog.Info("Hardware plugin routes registered")
 }
@@ -760,6 +774,155 @@ func (p *HardwarePlugin) handleGetTxRxSwitch(c *fiber.Ctx) error {
 	}, "")
 }
 
+// Attenuator control handlers (PE4312)
+
+func (p *HardwarePlugin) handleSetAttenuator1(c *fiber.Ctx) error {
+	var req struct {
+		Db float64 `json:"db"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return SendErrorMessage(c, 400, "Invalid request body")
+	}
+
+	cfg := p.config.Attenuator
+	ctrl, err := NewPE4312Controller(p.config.SX1255.GPIOChip, cfg.DataPin, cfg.ClkPin, cfg.LE1Pin, cfg.LE2Pin)
+	if err != nil {
+		return SendError(c, 500, err)
+	}
+	defer ctrl.Close()
+
+	if err := ctrl.SetAttenuation(1, req.Db); err != nil {
+		return SendError(c, 500, err)
+	}
+
+	actualDb := float64(int(req.Db*2.0+0.5)) * 0.5
+	if actualDb > 31.5 {
+		actualDb = 31.5
+	}
+
+	slog.Info("Attenuator chip 1 set", "db", actualDb)
+	return SendSuccess(c, map[string]interface{}{
+		"chip":  1,
+		"db":    actualDb,
+		"value": int(actualDb * 2),
+	}, fmt.Sprintf("Chip 1 set to %.1f dB", actualDb))
+}
+
+func (p *HardwarePlugin) handleSetAttenuator2(c *fiber.Ctx) error {
+	var req struct {
+		Db float64 `json:"db"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return SendErrorMessage(c, 400, "Invalid request body")
+	}
+
+	cfg := p.config.Attenuator
+	ctrl, err := NewPE4312Controller(p.config.SX1255.GPIOChip, cfg.DataPin, cfg.ClkPin, cfg.LE1Pin, cfg.LE2Pin)
+	if err != nil {
+		return SendError(c, 500, err)
+	}
+	defer ctrl.Close()
+
+	if err := ctrl.SetAttenuation(2, req.Db); err != nil {
+		return SendError(c, 500, err)
+	}
+
+	actualDb := float64(int(req.Db*2.0+0.5)) * 0.5
+	if actualDb > 31.5 {
+		actualDb = 31.5
+	}
+
+	slog.Info("Attenuator chip 2 set", "db", actualDb)
+	return SendSuccess(c, map[string]interface{}{
+		"chip":  2,
+		"db":    actualDb,
+		"value": int(actualDb * 2),
+	}, fmt.Sprintf("Chip 2 set to %.1f dB", actualDb))
+}
+
+func (p *HardwarePlugin) handleSetAttenuatorBoth(c *fiber.Ctx) error {
+	var req struct {
+		Db float64 `json:"db"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return SendErrorMessage(c, 400, "Invalid request body")
+	}
+
+	cfg := p.config.Attenuator
+	ctrl, err := NewPE4312Controller(p.config.SX1255.GPIOChip, cfg.DataPin, cfg.ClkPin, cfg.LE1Pin, cfg.LE2Pin)
+	if err != nil {
+		return SendError(c, 500, err)
+	}
+	defer ctrl.Close()
+
+	if err := ctrl.SetBoth(req.Db); err != nil {
+		return SendError(c, 500, err)
+	}
+
+	actualDb := float64(int(req.Db*2.0+0.5)) * 0.5
+	if actualDb > 31.5 {
+		actualDb = 31.5
+	}
+
+	slog.Info("Attenuator both chips set", "db", actualDb)
+	return SendSuccess(c, map[string]interface{}{
+		"db":    actualDb,
+		"value": int(actualDb * 2),
+	}, fmt.Sprintf("Both chips set to %.1f dB", actualDb))
+}
+
+func (p *HardwarePlugin) handleGetAttenuator1(c *fiber.Ctx) error {
+	cfg := p.config.Attenuator
+	ctrl, err := NewPE4312Controller(p.config.SX1255.GPIOChip, cfg.DataPin, cfg.ClkPin, cfg.LE1Pin, cfg.LE2Pin)
+	if err != nil {
+		return SendError(c, 500, err)
+	}
+	defer ctrl.Close()
+
+	val, err := ctrl.GetAttenuation(1)
+	if err != nil {
+		return SendError(c, 500, err)
+	}
+
+	return SendSuccess(c, map[string]interface{}{
+		"chip":  1,
+		"db":    float64(val) * 0.5,
+		"value": val,
+	}, "")
+}
+
+func (p *HardwarePlugin) handleGetAttenuator2(c *fiber.Ctx) error {
+	cfg := p.config.Attenuator
+	ctrl, err := NewPE4312Controller(p.config.SX1255.GPIOChip, cfg.DataPin, cfg.ClkPin, cfg.LE1Pin, cfg.LE2Pin)
+	if err != nil {
+		return SendError(c, 500, err)
+	}
+	defer ctrl.Close()
+
+	val, err := ctrl.GetAttenuation(2)
+	if err != nil {
+		return SendError(c, 500, err)
+	}
+
+	return SendSuccess(c, map[string]interface{}{
+		"chip":  2,
+		"db":    float64(val) * 0.5,
+		"value": val,
+	}, "")
+}
+
+func (p *HardwarePlugin) handleAttenuatorInfo(c *fiber.Ctx) error {
+	cfg := p.config.Attenuator
+	return SendSuccess(c, map[string]interface{}{
+		"config": map[string]interface{}{
+			"data_pin": cfg.DataPin,
+			"clk_pin":  cfg.ClkPin,
+			"le1_pin":  cfg.LE1Pin,
+			"le2_pin":  cfg.LE2Pin,
+		},
+	}, "")
+}
+
 // Register the plugin
 func init() {
 	Register("hardware", func(config interface{}) (Plugin, error) {
@@ -787,11 +950,40 @@ func init() {
 			if txRxPin, ok := toInt(sx1255Cfg["tx_rx_pin"]); ok {
 				hwConfig.SX1255.TxRxPin = txRxPin
 			} else {
-				hwConfig.SX1255.TxRxPin = 13 // Default TX/RX pin
+				hwConfig.SX1255.TxRxPin = 15 // Default TX/RX pin
 			}
 			if clockFreq, ok := toUint32(sx1255Cfg["clock_freq"]); ok {
 				hwConfig.SX1255.ClockFreq = clockFreq
 			}
+		}
+
+		// Parse attenuator config
+		if attCfg, ok := configMap["attenuator"].(map[string]interface{}); ok {
+			if dataPin, ok := toInt(attCfg["data_pin"]); ok {
+				hwConfig.Attenuator.DataPin = dataPin
+			} else {
+				hwConfig.Attenuator.DataPin = 6
+			}
+			if clkPin, ok := toInt(attCfg["clk_pin"]); ok {
+				hwConfig.Attenuator.ClkPin = clkPin
+			} else {
+				hwConfig.Attenuator.ClkPin = 7
+			}
+			if le1Pin, ok := toInt(attCfg["le1_pin"]); ok {
+				hwConfig.Attenuator.LE1Pin = le1Pin
+			} else {
+				hwConfig.Attenuator.LE1Pin = 12
+			}
+			if le2Pin, ok := toInt(attCfg["le2_pin"]); ok {
+				hwConfig.Attenuator.LE2Pin = le2Pin
+			} else {
+				hwConfig.Attenuator.LE2Pin = 13
+			}
+		} else {
+			hwConfig.Attenuator.DataPin = 6
+			hwConfig.Attenuator.ClkPin = 7
+			hwConfig.Attenuator.LE1Pin = 12
+			hwConfig.Attenuator.LE2Pin = 13
 		}
 
 		slog.Info("Hardware plugin config parsed",
@@ -800,7 +992,11 @@ func init() {
 			"gpio_chip", hwConfig.SX1255.GPIOChip,
 			"reset_pin", hwConfig.SX1255.ResetPin,
 			"tx_rx_pin", hwConfig.SX1255.TxRxPin,
-			"clock_freq", hwConfig.SX1255.ClockFreq)
+			"clock_freq", hwConfig.SX1255.ClockFreq,
+			"att_data_pin", hwConfig.Attenuator.DataPin,
+			"att_clk_pin", hwConfig.Attenuator.ClkPin,
+			"att_le1_pin", hwConfig.Attenuator.LE1Pin,
+			"att_le2_pin", hwConfig.Attenuator.LE2Pin)
 
 		return NewHardwarePlugin(hwConfig)
 	})

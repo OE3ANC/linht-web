@@ -56,6 +56,12 @@ type Config struct {
 			TxRxPin   int    `yaml:"tx_rx_pin"`
 			ClockFreq uint32 `yaml:"clock_freq"`
 		} `yaml:"sx1255"`
+		Attenuator struct {
+			DataPin int `yaml:"data_pin"`
+			ClkPin  int `yaml:"clk_pin"`
+			LE1Pin  int `yaml:"le1_pin"`
+			LE2Pin  int `yaml:"le2_pin"`
+		} `yaml:"attenuator"`
 	} `yaml:"hardware"`
 	CPS struct {
 		SettingsPath string `yaml:"settings_path"`
@@ -213,6 +219,12 @@ func initPlugins(app *fiber.App, dockerClient *client.Client) error {
 					"reset_pin":  config.Hardware.SX1255.ResetPin,
 					"tx_rx_pin":  config.Hardware.SX1255.TxRxPin,
 					"clock_freq": config.Hardware.SX1255.ClockFreq,
+				},
+				"attenuator": map[string]interface{}{
+					"data_pin": config.Hardware.Attenuator.DataPin,
+					"clk_pin":  config.Hardware.Attenuator.ClkPin,
+					"le1_pin":  config.Hardware.Attenuator.LE1Pin,
+					"le2_pin":  config.Hardware.Attenuator.LE2Pin,
 				},
 			}
 		case "cps":

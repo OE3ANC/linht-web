@@ -142,6 +142,41 @@
                 </div>
             </div>
 
+            <!-- Attenuator Control Section -->
+            <div class="hw-section">
+                <h3 class="hw-section-title">&gt; ATTENUATOR CONTROL (PE4312)</h3>
+                <div class="hw-controls-grid">
+                    <div class="hw-control-group">
+                        <label class="hw-label">Chip 1 (dB):</label>
+                        <div class="hw-control-row">
+                            <input type="number" id="hw-att1-db-input"
+                                   value="0" step="0.5" min="0" max="31.5">
+                            <button id="hw-set-att1-btn" class="btn btn-sm">Set</button>
+                            <span id="hw-att1-status" class="hw-value">--</span>
+                        </div>
+                    </div>
+
+                    <div class="hw-control-group">
+                        <label class="hw-label">Chip 2 (dB):</label>
+                        <div class="hw-control-row">
+                            <input type="number" id="hw-att2-db-input"
+                                   value="0" step="0.5" min="0" max="31.5">
+                            <button id="hw-set-att2-btn" class="btn btn-sm">Set</button>
+                            <span id="hw-att2-status" class="hw-value">--</span>
+                        </div>
+                    </div>
+
+                    <div class="hw-control-group">
+                        <label class="hw-label">Both Chips (dB):</label>
+                        <div class="hw-control-row">
+                            <input type="number" id="hw-att-both-db-input"
+                                   value="0" step="0.5" min="0" max="31.5">
+                            <button id="hw-set-att-both-btn" class="btn btn-sm">Set Both</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Register Viewer Section -->
             <div class="hw-section">
                 <h3 class="hw-section-title">&gt; REGISTER VIEWER</h3>

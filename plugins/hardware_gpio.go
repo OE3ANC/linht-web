@@ -155,14 +155,15 @@ func (g *GPIOController) GetResetPin() (bool, error) {
 
 // SetTxRxPin controls the TX/RX switch pin
 // true = TX mode, false = RX mode
+// TX mode drives pin LOW, RX mode drives pin HIGH (active-low switch)
 func (g *GPIOController) SetTxRxPin(tx bool) error {
 	if g.txRxLine == nil {
 		return fmt.Errorf("TX/RX line not initialized")
 	}
 
-	value := 0
+	value := 1 // RX mode = HIGH
 	if tx {
-		value = 1
+		value = 0 // TX mode = LOW
 	}
 
 	if err := g.txRxLine.SetValue(value); err != nil {

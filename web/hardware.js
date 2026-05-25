@@ -26,6 +26,11 @@ function initHardwareTab() {
     document.getElementById('hw-txrx-rx-btn').addEventListener('click', () => setTxRxSwitch(false));
     document.getElementById('hw-txrx-tx-btn').addEventListener('click', () => setTxRxSwitch(true));
 
+    // Attenuator control
+    document.getElementById('hw-set-att1-btn').addEventListener('click', () => setAttenuator(1));
+    document.getElementById('hw-set-att2-btn').addEventListener('click', () => setAttenuator(2));
+    document.getElementById('hw-set-att-both-btn').addEventListener('click', setAttenuatorBoth);
+
     // Register viewer buttons
     document.getElementById('hw-read-all-regs-btn').addEventListener('click', readAllRegisters);
 
@@ -435,4 +440,55 @@ async function getTxRxSwitchStatus() {
     } catch (error) {
         console.error('Error getting TX/RX status:', error);
     }
+}
+
+// Set attenuator for a single chip
+async function setAttenuator(chip) {
+    const inputId = chip === 1 ? 'hw-att1-db-input' : 'hw-att2-db-input';
+    const statusId = chip === 1 ? 'hw-att1-status' : 'hw-att2-status';
+    const db = parseFloat(document.getElementById(inputId).value);
+
+    if (isNaN(db) || db < 0 || db > 31.5) {
+        showToast('Attenuation must be 0–31.5 dB in 0.5 dB steps', 'error');
+        return;
+    }
+
+    await apiCall('Setting attenuator...', `/api/hardware/attenuator/${chip}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({db: db})
+    }, `Chip ${chip} set to ${db.toFixed(1)} dB`, (data) => {
+        if (data && data.data && data.data.db !== undefined) {
+            document.getElementById(statusId).textContent = data.data.db.toFixed(1) + ' dB';
+            document.getElementById(statusId).className = 'hw-value status-ok';
+            document.getElementById(inputId).value = data.data.db.toFixed(1);
+        }
+    });
+}
+
+// Set both chips to same attenuation
+async function setAttenuatorBoth() {
+    const db = parseFloat(document.getElementById('hw-att-both-db-input').value);
+
+    if (isNaN(db) || db < 0 || db > 31.5) {
+        showToast('Attenuation must be 0–31.5 dB in 0.5 dB steps', 'error');
+        return;
+    }
+
+    await apiCall('Setting attenuators...', '/api/hardware/attenuator/both', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({db: db})
+    }, `Both chips set to ${db.toFixed(1)} dB`, (data) => {
+        if (data && data.data && data.data.db !== undefined) {
+            const roundedDb = data.data.db.toFixed(1);
+            document.getElementById('hw-att1-db-input').value = roundedDb;
+            document.getElementById('hw-att2-db-input').value = roundedDb;
+            document.getElementById('hw-att-both-db-input').value = roundedDb;
+            document.getElementById('hw-att1-status').textContent = roundedDb + ' dB';
+            document.getElementById('hw-att1-status').className = 'hw-value status-ok';
+            document.getElementById('hw-att2-status').textContent = roundedDb + ' dB';
+            document.getElementById('hw-att2-status').className = 'hw-value status-ok';
+        }
+    });
 }
